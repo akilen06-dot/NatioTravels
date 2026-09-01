@@ -71,6 +71,15 @@ Supabase's default email templates work out of the box (a few free sends/hour on
 — fine for testing. For real volume later, you'd connect a custom SMTP provider in
 **Authentication → Settings**, same section.
 
+### If you tested matching before this fix
+
+An earlier version of `schema.sql` had an RLS bug that made it impossible for the app to detect
+a real mutual match — swipes saved fine, but a match/conversation never got created. If any real
+users tried to match before you applied the fix, run
+[`supabase/backfill-missed-matches.sql`](supabase/backfill-missed-matches.sql) once in the SQL
+Editor — it finds any pair with reciprocal likes and creates the match/conversation they should
+have gotten. Safe to run more than once; new matches going forward don't need this.
+
 ### Recreating the demo accounts (optional)
 
 The mock demo accounts (Maria/James/Elena + the 6 seed travelers) aren't real logins until you

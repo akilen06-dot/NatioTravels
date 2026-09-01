@@ -226,10 +226,21 @@ drop policy if exists "users can update their own profile" on profiles;
 create policy "users can update their own profile" on profiles
   for update using (auth.uid() = id);
 
--- swipes: only the swiper can see or create their own swipe rows.
+-- swipes: you can only ever create/change your own swipe, but you can READ
+-- any row where you're the target too — the app needs that to detect a
+-- mutual match ("did this person already swipe right on me"). Without this,
+-- a match could never be detected: the second swiper's reciprocity check
+-- would be silently filtered to zero rows by RLS.
 drop policy if exists "users manage their own swipes" on swipes;
-create policy "users manage their own swipes" on swipes
-  for all using (auth.uid() = swiper_id) with check (auth.uid() = swiper_id);
+drop policy if exists "users can read swipes involving them" on swipes;
+create policy "users can read swipes involving them" on swipes
+  for select using (auth.uid() = swiper_id or auth.uid() = target_id);
+drop policy if exists "users can create their own swipes" on swipes;
+create policy "users can create their own swipes" on swipes
+  for insert with check (auth.uid() = swiper_id);
+drop policy if exists "users can update their own swipes" on swipes;
+create policy "users can update their own swipes" on swipes
+  for update using (auth.uid() = swiper_id) with check (auth.uid() = swiper_id);
 
 -- matches: visible to either participant; created by the app layer (service-role-free,
 -- both rows already validated via the swipes policy above).
