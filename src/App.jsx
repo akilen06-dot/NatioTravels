@@ -7,6 +7,8 @@ import Start from './routes/Start'
 import AuthChoice from './routes/auth/AuthChoice'
 import SignUp from './routes/auth/SignUp'
 import SignIn from './routes/auth/SignIn'
+import ForgotPassword from './routes/auth/ForgotPassword'
+import ResetPassword from './routes/auth/ResetPassword'
 import OnboardingGuard, { PlanGuard } from './components/OnboardingGuard'
 import LocationPermission from './routes/onboarding/LocationPermission'
 import IdentityVerification from './routes/onboarding/IdentityVerification'
@@ -47,6 +49,8 @@ export default function App() {
       <Route path="/auth" element={<AuthChoice />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/signin" element={<SignIn />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<OnboardingGuard />}>
         <Route path="/onboarding/location" element={<LocationPermission />} />

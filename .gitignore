@@ -15,6 +15,9 @@ dist-ssr
 # Service-role secrets for the one-time demo-data seed script — never commit these.
 supabase/.env.seed
 
+# Supabase CLI's local project-link cache — machine-specific, not shared state.
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

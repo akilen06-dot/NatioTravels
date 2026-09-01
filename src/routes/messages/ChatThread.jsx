@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, PaperPlaneTilt, ProhibitInset } from '@phosphor-icons/react'
 import { fieldClasses } from '../../lib/fieldClasses'
@@ -12,9 +12,20 @@ export default function ChatThread() {
   const sendMessage = useStore((s) => s.sendMessage)
   const blockedIds = useStore((s) => s.blockedIds)
   const unblockUser = useStore((s) => s.unblockUser)
+  const refreshThreads = useStore((s) => s.refreshThreads)
   const [text, setText] = useState('')
+  // A thread can exist on the server before it's in this device's local
+  // cache (e.g. the other person just completed the match) — refresh once
+  // before concluding it really doesn't exist.
+  const [checked, setChecked] = useState(false)
+
+  useEffect(() => {
+    refreshThreads().finally(() => setChecked(true))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!thread) {
+    if (!checked) return <p className="p-8 text-center text-ink-muted">Loading…</p>
     return <p className="p-8 text-center text-ink-muted">Conversation not found.</p>
   }
 

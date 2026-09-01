@@ -52,6 +52,7 @@ const initialDraft = {
   country: '',
   dob: '',
   idCaptured: false,
+  idPhoto: '',
   faceVerified: false,
   photo: '',
   city: '',
@@ -122,14 +123,34 @@ export const useStore = create(
           threads: Object.fromEntries(threads.map((t) => [t.id, t])),
           posts,
           blockedIds,
-          reports,
         })
       },
 
-      attemptSignIn: async (email, password) => {
+      // Matches don't only happen from your own swipe — the other person
+      // might complete one after you've already loaded the app (their swipe
+      // is what flips a one-directional like into a real match). Called
+      // whenever Messages opens so those show up without needing to sign
+      // back in. A no-op in mock mode, where swipe() already updates
+      // threads/matches locally and synchronously.
+      refreshThreads: async () => {
+        if (!isBackendConfigured) return
+        const userId = get().currentUser?.id
+        if (!userId) return
+        const [matchedIds, threads] = await Promise.all([
+          matchesApi.listMatchedIds(userId),
+          messagesApi.listConversations(userId),
+        ])
+        set({
+          matches: matchedIds,
+          threads: Object.fromEntries(threads.map((t) => [t.id, t])),
+        })
+      },
+
+      // `identifier` can be either an email or a username.
+      attemptSignIn: async (identifier, password) => {
         if (isBackendConfigured) {
           try {
-            const profile = await profilesApi.signIn(email, password)
+            const profile = await profilesApi.signIn(identifier, password)
             set({ currentUser: profile, auth: 'active', signInError: '' })
             await get().hydrate()
             return true
@@ -141,11 +162,12 @@ export const useStore = create(
             return false
           }
         }
+        const normalized = identifier.trim().toLowerCase()
         const found = get().existingUsers.find(
-          (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
+          (u) => u.email.toLowerCase() === normalized || u.username?.toLowerCase() === normalized,
         )
         if (!found) {
-          set({ signInError: 'No account found with that email. Try signing up instead.' })
+          set({ signInError: 'No account found with that email or username. Try signing up instead.' })
           return false
         }
         if (found.password !== password) {
@@ -157,9 +179,6 @@ export const useStore = create(
       },
 
       clearSignInError: () => set({ signInError: '' }),
-
-      completeVerification: () =>
-        set((s) => ({ draft: { ...s.draft, idCaptured: true, faceVerified: true } })),
 
       setTripDates: (tripStart, tripEnd) =>
         set((s) => ({ draft: { ...s.draft, tripStart, tripEnd } })),
@@ -286,6 +305,42 @@ export const useStore = create(
       signOut: async () => {
         if (isBackendConfigured) await profilesApi.signOut()
         set({ auth: 'signed-out', currentUser: null, draft: { ...initialDraft } })
+      },
+
+      // Always resolves { ok: true } — never reveals whether the email is
+      // actually registered, in either mode, so the UI can't be used to
+      // enumerate accounts.
+      requestPasswordReset: async (email) => {
+        if (isBackendConfigured) {
+          try {
+            await profilesApi.requestPasswordReset(email)
+          } catch (err) {
+            return { ok: false, error: err.message || 'Could not send that email. Try again.' }
+          }
+          return { ok: true, real: true }
+        }
+        // No backend configured: there's no email service to actually send
+        // through. Simulate the same confirmation UX as the real flow —
+        // this is the prototype-checkout pattern used elsewhere in the app.
+        return { ok: true, real: false }
+      },
+
+      // Called from /reset-password once Supabase has turned the emailed
+      // link into a temporary recovery session. Sets the new password and
+      // signs the user straight in with it, same as a normal sign-in.
+      confirmPasswordReset: async (newPassword) => {
+        if (!isBackendConfigured) {
+          return { ok: false, error: 'Password reset by email needs the real backend configured.' }
+        }
+        try {
+          await profilesApi.confirmPasswordReset(newPassword)
+          const profile = await profilesApi.getCurrentAuthedProfile()
+          set({ currentUser: profile, auth: 'active', signInError: '' })
+          await get().hydrate()
+          return { ok: true }
+        } catch (err) {
+          return { ok: false, error: err.message || 'Could not reset your password. Try again.' }
+        }
       },
 
       updateProfile: async ({ photo, bio }) => {
@@ -436,7 +491,7 @@ export const useStore = create(
           } else {
             set((s) => ({ passedIds: [...s.passedIds, travelerId] }))
           }
-          return
+          return { matched: liked && matched }
         }
         const s = get()
         if (liked) {
@@ -460,9 +515,13 @@ export const useStore = create(
               },
             }))
           }
-        } else {
-          set({ passedIds: [...s.passedIds, travelerId] })
+          // Mock mode: seeded travelers are NPCs that always "like back",
+          // so every right-swipe is treated as an instant match — same as
+          // the app's original prototype behavior.
+          return { matched: true }
         }
+        set({ passedIds: [...s.passedIds, travelerId] })
+        return { matched: false }
       },
 
       undoLastSwipe: async () => {

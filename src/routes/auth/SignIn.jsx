@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeSlash } from '@phosphor-icons/react'
 import OnboardingLayout from '../../components/OnboardingLayout'
 import Field from '../../components/Field'
@@ -20,13 +20,13 @@ export default function SignIn() {
   const attemptSignIn = useStore((s) => s.attemptSignIn)
   const signInError = useStore((s) => s.signInError)
   const clearSignInError = useStore((s) => s.clearSignInError)
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (await attemptSignIn(email, password)) navigate('/discover')
+    if (await attemptSignIn(identifier, password)) navigate('/discover')
   }
 
   return (
@@ -36,14 +36,14 @@ export default function SignIn() {
         className="flex flex-col gap-5"
         onChange={() => signInError && clearSignInError()}
       >
-        <Field label="Email" htmlFor="signin-email" error={signInError}>
+        <Field label="Email or username" htmlFor="signin-identifier" error={signInError}>
           <input
-            id="signin-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            id="signin-identifier"
+            type="text"
+            autoComplete="username"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            placeholder="you@example.com or username"
             className={fieldClasses(!!signInError)}
           />
         </Field>
@@ -70,6 +70,13 @@ export default function SignIn() {
           </div>
         </Field>
 
+        <Link
+          to="/forgot-password"
+          className="-mt-3 self-end text-[13px] font-medium text-accent-strong hover:text-accent-strong/80"
+        >
+          Forgot password?
+        </Link>
+
         <Button type="submit" size="lg" className="w-full">
           Sign in
         </Button>
@@ -86,7 +93,7 @@ export default function SignIn() {
               key={d.email}
               type="button"
               onClick={() => {
-                setEmail(d.email)
+                setIdentifier(d.email)
                 setPassword(DEMO_PASSWORD)
                 if (signInError) clearSignInError()
               }}

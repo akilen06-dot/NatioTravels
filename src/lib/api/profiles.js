@@ -41,6 +41,16 @@ export function mapProfileRow(row) {
   }
 }
 
+// The currently-authenticated Supabase user's profile — used after a
+// password reset, where we have a live session but no id handy yet.
+export async function getCurrentAuthedProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('No authenticated session found.')
+  return getProfile(user.id)
+}
+
 export async function getProfile(id) {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single()
   if (error) throw error
@@ -98,7 +108,16 @@ export async function signUp(draft) {
   return mapProfileRow(data)
 }
 
-export async function signIn(email, password) {
+// `identifier` can be either an email or a username — usernames are
+// resolved to their email first, since Supabase Auth signs in by email.
+export async function signIn(identifier, password) {
+  let email = identifier.trim()
+  if (!email.includes('@')) {
+    const { data, error } = await supabase.rpc('email_for_username', { check_username: email })
+    if (error) throw error
+    if (!data) throw new Error('No account found with that email or username. Try signing up instead.')
+    email = data
+  }
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
   return getProfile(data.user.id)
@@ -141,6 +160,23 @@ export async function changePassword(email, currentPassword, newPassword) {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) return { ok: false, error: error.message }
   return { ok: true }
+}
+
+// Sends a password-reset email via Supabase Auth's built-in email service.
+// Always resolves without revealing whether the email is actually
+// registered — that's a deliberate security default, not a bug.
+export async function requestPasswordReset(email) {
+  const redirectTo = `${window.location.origin}/reset-password`
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+  if (error) throw error
+}
+
+// Called from the /reset-password page after the user arrives via the
+// emailed link, which Supabase's client turns into a temporary "recovery"
+// session automatically (see onAuthStateChange in ResetPassword.jsx).
+export async function confirmPasswordReset(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
 }
 
 export async function deleteMyProfile(id) {

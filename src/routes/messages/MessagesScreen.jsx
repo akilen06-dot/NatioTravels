@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChatCircleDots } from '@phosphor-icons/react'
 import { useStore } from '../../lib/store'
@@ -16,6 +17,13 @@ function timeAgo(iso) {
 export default function MessagesScreen() {
   const threads = useStore((s) => s.threads)
   const blockedIds = useStore((s) => s.blockedIds)
+  const refreshThreads = useStore((s) => s.refreshThreads)
+
+  useEffect(() => {
+    refreshThreads()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const list = Object.values(threads)
     .filter((t) => {
       if (t.type !== 'match') return true

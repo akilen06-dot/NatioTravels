@@ -15,6 +15,33 @@ Restart `npm run dev` after editing `.env.local` (Vite only reads env files on s
 
 ---
 
+## Real ID + face verification (works out of the box, no setup)
+
+Unlike the other phases, this one needs no account, no API key, and no `.env.local` change —
+it's on right now. `/onboarding/verify` and `/onboarding/face-scan` do real work:
+
+- **ID photo**: "Take photo" opens your real camera; "Upload from gallery" reads a real file.
+- **Face scan**: opens your real camera, then extracts a face descriptor from the live feed and
+  from your ID photo using [`@vladmandic/face-api`](https://github.com/vladmandic/face-api)
+  (runs fully in the browser via TensorFlow.js — no server, no third party ever sees the photos)
+  and compares them. It only proceeds past the face-scan step on a real match.
+
+A few things worth knowing:
+- The model files live in `public/models/` (~6.9MB, committed to the repo). They're fetched
+  once and cached by the browser after that.
+- **The very first scan on a fresh page load is noticeably slower** (TF.js has to compile its
+  WebGL shaders the first time each model runs) — that's expected, not a bug. There's no timeout
+  on the "Checking…" state, so it just finishes when it finishes.
+- Camera access requires HTTPS (or `localhost`) — this is a browser security rule, not something
+  in this app's control. It'll work fine both in local dev and once deployed to Vercel (which is
+  HTTPS by default), but wouldn't work over plain `http://` on a real domain.
+- What this still doesn't do: verify the ID document itself is authentic (that it's a real
+  passport/ID and not a photo of a photo, edited, expired, etc.) — it only confirms the face in
+  front of the camera matches the face in the photo you provided. Real document authenticity
+  checking needs a KYC vendor (Persona, Onfido, Veriff) and is a separate, bigger integration.
+
+---
+
 ## Phase 1 — Database & real accounts (Supabase)
 
 1. Go to [supabase.com](https://supabase.com), create a free account and a new project.
@@ -29,6 +56,20 @@ Restart `npm run dev` after editing `.env.local` (Vite only reads env files on s
 4. Restart the dev server. Sign up a real account through the app's own `/signup` flow to
    confirm it's working — check **Table Editor → profiles** in the Supabase dashboard for the
    new row.
+
+### Forgot-password emails
+
+"Forgot password?" on the sign-in page (`/forgot-password`, `/reset-password`) uses Supabase
+Auth's built-in password-reset email — no extra service to set up. One thing you do need to do:
+
+1. In the dashboard, go to **Authentication → URL Configuration**.
+2. Add `http://localhost:5173/reset-password` (and your production URL's `/reset-password`, once
+   deployed) to **Redirect URLs**. Supabase refuses to redirect anywhere not on this list, so
+   without it the emailed link won't be able to bring the user back into the app.
+
+Supabase's default email templates work out of the box (a few free sends/hour on the free tier)
+— fine for testing. For real volume later, you'd connect a custom SMTP provider in
+**Authentication → Settings**, same section.
 
 ### Recreating the demo accounts (optional)
 
@@ -141,9 +182,10 @@ in this codebase does that automatically.
 
 ## What's still simulated, even with everything above configured
 
-- **ID/passport verification and the face scan** (`/onboarding/verify`, `/onboarding/face-scan`)
-  are still mocked UI flows — no real KYC or biometric vendor is integrated. A real version needs
-  a vendor like Persona or Onfido, plus a compliance review.
+- **Face matching is real** (see the section above), but **document authenticity is not** — the
+  app confirms the live face matches the ID photo, not that the ID itself is a genuine,
+  unaltered, unexpired passport/ID. A real version of that needs a KYC vendor like Persona,
+  Onfido, or Veriff, plus a compliance review.
 - **Deleting your account** removes your `profiles` row (and everything that cascades from it),
   but doesn't delete the underlying Supabase Auth user — that needs a service-role action, which
   would be a small additional Edge Function.

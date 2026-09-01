@@ -39,10 +39,10 @@ export default function DiscoverScreen() {
     )
   }
 
-  function handleSwiped(direction) {
+  async function handleSwiped(direction) {
     const traveler = deck[0]
-    swipe(traveler.id, direction === 'like')
-    if (direction === 'like') setMatched(traveler)
+    const result = await swipe(traveler.id, direction === 'like')
+    if (direction === 'like' && result?.matched) setMatched(traveler)
   }
 
   return (

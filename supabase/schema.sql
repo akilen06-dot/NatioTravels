@@ -177,6 +177,22 @@ $$;
 
 grant execute on function is_username_taken(text) to anon, authenticated;
 
+-- Lets sign-in accept a username instead of an email: resolves it to the
+-- account's email first, then that email is used with the normal password
+-- sign-in. Same reasoning as is_username_taken above — an anonymous visitor
+-- can't query `profiles` directly, and usernames are already shown publicly
+-- as @handles throughout the app, so revealing this mapping isn't new exposure.
+create or replace function email_for_username(check_username text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select email from profiles where lower(username) = lower(check_username) limit 1;
+$$;
+
+grant execute on function email_for_username(text) to anon, authenticated;
+
 -- ============================================================================
 -- Row Level Security
 -- ============================================================================

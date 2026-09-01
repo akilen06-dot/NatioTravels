@@ -24,8 +24,25 @@ const PRICE_IDS = {
   annual: Deno.env.get('STRIPE_PRICE_ANNUAL')!,
 }
 
+// Called from a real browser (via supabase.functions.invoke), so it needs to
+// answer the CORS preflight itself and set these on every response —
+// Supabase Edge Functions don't add CORS headers for you.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
+}
+
 Deno.serve(async (req) => {
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -36,11 +53,11 @@ Deno.serve(async (req) => {
     data: { user },
     error: authErr,
   } = await supabase.auth.getUser()
-  if (authErr || !user) return new Response('Unauthorized', { status: 401 })
+  if (authErr || !user) return json({ error: 'Unauthorized' }, 401)
 
   const { plan, billing } = await req.json()
   if (plan !== 'trip' && plan !== 'subscription') {
-    return new Response('Invalid plan', { status: 400 })
+    return json({ error: 'Invalid plan' }, 400)
   }
 
   const { data: profile } = await supabase
@@ -69,7 +86,5 @@ Deno.serve(async (req) => {
     subscription_data: plan === 'subscription' ? { metadata: { user_id: user.id, billing } } : undefined,
   })
 
-  return new Response(JSON.stringify({ url: session.url }), {
-    headers: { 'Content-Type': 'application/json' },
-  })
+  return json({ url: session.url })
 })
