@@ -1,0 +1,152 @@
+# Going live: setup guide
+
+This app runs today with **zero setup** — everything is local mock data. Each
+section below is independent and optional: add its keys to `.env.local` and
+that piece switches from mock to real. Skip a section and that part keeps
+working exactly like the prototype did.
+
+Copy the template first:
+
+```bash
+cp .env.example .env.local
+```
+
+Restart `npm run dev` after editing `.env.local` (Vite only reads env files on startup).
+
+---
+
+## Phase 1 — Database & real accounts (Supabase)
+
+1. Go to [supabase.com](https://supabase.com), create a free account and a new project.
+2. In the project dashboard, open **SQL Editor → New query**, paste the entire contents of
+   [`supabase/schema.sql`](supabase/schema.sql), and run it.
+3. In **Project Settings → API**, copy the **Project URL** and the **anon public** key into
+   `.env.local`:
+   ```
+   VITE_SUPABASE_URL=https://xxxxx.supabase.co
+   VITE_SUPABASE_ANON_KEY=eyJ...
+   ```
+4. Restart the dev server. Sign up a real account through the app's own `/signup` flow to
+   confirm it's working — check **Table Editor → profiles** in the Supabase dashboard for the
+   new row.
+
+### Recreating the demo accounts (optional)
+
+The mock demo accounts (Maria/James/Elena + the 6 seed travelers) aren't real logins until you
+run the seed script — it uses Supabase's admin API, which plain SQL can't do (creating an
+`auth.users` row needs the Auth service, not a table insert).
+
+1. In **Project Settings → API**, copy the **service_role** key (⚠️ this key bypasses all
+   security rules — never put it in frontend code or commit it anywhere).
+2. Create `supabase/.env.seed` (already gitignored):
+   ```
+   SUPABASE_URL=https://xxxxx.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   SEED_CONFIRM=yes-seed-this-dev-project
+   ```
+   That `SEED_CONFIRM` line is a deliberate safety catch — the script refuses to run without it, and separately refuses to run at all if it finds any real (non-seed) profiles already in the project, since that means real people may have signed up. Never run this against a project real users are on.
+3. Run it once:
+   ```bash
+   node --env-file=supabase/.env.seed supabase/seed.mjs
+   ```
+4. Sign in with any of the printed emails (e.g. `maria@example.com`) and password `password123`.
+
+### Before you actually launch: remove the seed data
+
+Every profile `seed.mjs` creates is flagged `is_seed_data = true` specifically so you can find and
+remove it later. Once you're ready for real users, delete it all — both the fake logins and
+everything that cascades from them (their matches, messages, groups, posts):
+
+```bash
+# add CLEANUP_CONFIRM=yes-delete-seed-data to supabase/.env.seed first
+node --env-file=supabase/.env.seed supabase/cleanup-seed-data.mjs
+```
+
+Real accounts (anything with `is_seed_data = false`) are never touched by this.
+
+---
+
+## Phase 2 — Deploying the site (Vercel)
+
+1. Push this repo to GitHub.
+2. Go to [vercel.com](https://vercel.com), sign up, and **Import Project** from your GitHub repo.
+3. Under **Environment Variables**, add the same variables from your `.env.local`
+   (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and any others you've configured).
+4. Deploy. `vercel.json` is already set up so client-side routes (like `/discover`) don't 404 on
+   refresh.
+
+---
+
+## Phase 3 — Real location (OpenCage)
+
+1. Go to [opencagedata.com](https://opencagedata.com), create a free account, and copy your API key.
+2. Add to `.env.local`:
+   ```
+   VITE_GEOCODING_API_KEY=your-key-here
+   ```
+3. Restart the dev server. Go through onboarding and tap "Allow while using app" on the location
+   screen — grant the browser's own location permission prompt when it appears. Your city should
+   be filled in automatically, and Discover will show real computed distances between users who've
+   shared their location (instead of the seeded numbers).
+
+Without this key, location permission still prompts and the app still works — it just keeps
+using the country you typed at signup and the seeded distance numbers.
+
+---
+
+## Phase 4 — Real billing (Stripe)
+
+This is the most involved piece, since it needs Edge Functions deployed alongside your database.
+
+1. Go to [stripe.com](https://stripe.com) and create an account (you can do everything below in
+   **test mode** without any business verification).
+2. In the Stripe Dashboard, create three Products/Prices:
+   - "Trip Pass" — one-time, $9.99
+   - "Frequent Traveler Monthly" — recurring monthly, $16.99
+   - "Frequent Traveler Annual" — recurring yearly, $142.99
+   Copy each **Price ID** (`price_...`).
+3. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and log in, then from the
+   `haven-app` folder:
+   ```bash
+   supabase link --project-ref your-project-ref
+   supabase secrets set STRIPE_SECRET_KEY=sk_test_... \
+     STRIPE_PRICE_TRIP=price_... \
+     STRIPE_PRICE_MONTHLY=price_... \
+     STRIPE_PRICE_ANNUAL=price_... \
+     SITE_URL=http://localhost:5173
+   supabase functions deploy create-checkout-session
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+4. In the Stripe Dashboard, go to **Developers → Webhooks → Add endpoint**, point it at your
+   deployed `stripe-webhook` function's URL, and select these events: `checkout.session.completed`,
+   `customer.subscription.updated`, `customer.subscription.deleted`. Copy the **Signing secret**
+   and set it too:
+   ```bash
+   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+5. Add the publishable key to `.env.local` (this one, unlike the others above, is safe in
+   frontend code — it's meant to be public):
+   ```
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   ```
+6. Restart the dev server, go to `/onboarding/plan`, and pay with Stripe's test card
+   `4242 4242 4242 4242`, any future expiry, any CVC. Confirm the `plan` column updates on your
+   `profiles` row in Supabase after the redirect back.
+
+**Going live (real charges) is a decision only you can make** — it needs your own verified
+Stripe business account and switching from `sk_test_.../pk_test_...` keys to live ones. Nothing
+in this codebase does that automatically.
+
+---
+
+## What's still simulated, even with everything above configured
+
+- **ID/passport verification and the face scan** (`/onboarding/verify`, `/onboarding/face-scan`)
+  are still mocked UI flows — no real KYC or biometric vendor is integrated. A real version needs
+  a vendor like Persona or Onfido, plus a compliance review.
+- **Deleting your account** removes your `profiles` row (and everything that cascades from it),
+  but doesn't delete the underlying Supabase Auth user — that needs a service-role action, which
+  would be a small additional Edge Function.
+- **Private accounts** are enforced in the UI (hiding bio/posts from non-matches), not at the
+  database (RLS) level yet — a determined API caller could still read a private profile's row.
+  Tightening this is a good next step once the basics above are working.

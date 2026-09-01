@@ -1,0 +1,181 @@
+@import "tailwindcss";
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+@import "@fontsource/geist-mono/600.css";
+@import "react-day-picker/style.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg: #ffffff;
+  --color-bg-raised: #ffffff;
+  --color-bg-sunken: #f1f4fa;
+  --color-ink: #0e1526;
+  --color-ink-muted: #51607a;
+  --color-ink-faint: #8996ac;
+  --color-border: #e3e8f2;
+  --color-border-strong: #cdd6e8;
+  --color-accent: #3b5fe0;
+  --color-accent-strong: #1d3fc4;
+  --color-accent-tint: #eef2fe;
+  --color-accent-tint-strong: #dce6fd;
+  --color-teal: #0f9b8e;
+  --color-teal-tint: #e6f5f3;
+  --color-coral: #e2703a;
+  --color-coral-tint: #fdeee5;
+  --color-danger: #c1362f;
+  --color-danger-tint: #fdeeed;
+  --color-success: #3f7d52;
+}
+
+.dark {
+  --color-bg: #0a0e1a;
+  --color-bg-raised: #121a2c;
+  --color-bg-sunken: #060911;
+  --color-ink: #f3f6fc;
+  --color-ink-muted: #9aa6c2;
+  --color-ink-faint: #67718c;
+  --color-border: #212b45;
+  --color-border-strong: #2c3a5c;
+  --color-accent: #7092f5;
+  --color-accent-strong: #3b5fe0;
+  --color-accent-tint: #131f3d;
+  --color-accent-tint-strong: #182a4f;
+  --color-teal: #3fbdae;
+  --color-teal-tint: #12302c;
+  --color-coral: #f0895c;
+  --color-coral-tint: #34211a;
+  --color-danger: #e0655d;
+  --color-danger-tint: #2c1a19;
+  --color-success: #63b17a;
+}
+
+@theme {
+  --color-bg: var(--color-bg);
+  --color-bg-raised: var(--color-bg-raised);
+  --color-bg-sunken: var(--color-bg-sunken);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-strong: var(--color-accent-strong);
+  --color-accent-tint: var(--color-accent-tint);
+  --color-accent-tint-strong: var(--color-accent-tint-strong);
+  --color-teal: var(--color-teal);
+  --color-teal-tint: var(--color-teal-tint);
+  --color-coral: var(--color-coral);
+  --color-coral-tint: var(--color-coral-tint);
+  --color-danger: var(--color-danger);
+  --color-danger-tint: var(--color-danger-tint);
+  --color-success: var(--color-success);
+
+  --font-sans:
+    'Geist Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Calendar (react-day-picker) theming to match the app's tokens */
+.natio-calendar.rdp-root {
+  --rdp-accent-color: var(--color-accent-strong);
+  --rdp-accent-background-color: var(--color-accent-tint);
+  --rdp-today-color: var(--color-accent-strong);
+  --rdp-day_button-width: 36px;
+  --rdp-day_button-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day-height: 36px;
+  --rdp-nav_button-width: 30px;
+  --rdp-nav_button-height: 30px;
+  --rdp-nav-height: 2.25rem;
+  --rdp-disabled-opacity: 0.35;
+  --rdp-outside-opacity: 0.4;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+}
+
+.natio-calendar .rdp-weekday {
+  color: var(--color-ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.natio-calendar .rdp-month_caption {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.natio-calendar .rdp-day_button {
+  font-size: 13.5px;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.natio-calendar .rdp-day_button:hover:not([disabled]) {
+  background-color: var(--color-bg-sunken);
+}
+
+.natio-calendar .rdp-selected .rdp-day_button {
+  background-color: var(--color-accent-strong);
+  color: #fff;
+  font-weight: 500;
+}
+
+.natio-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  font-weight: 600;
+  color: var(--color-accent-strong);
+}
+
+.natio-calendar .rdp-chevron {
+  fill: var(--color-ink-muted);
+}
+
+.natio-calendar .rdp-button_previous,
+.natio-calendar .rdp-button_next {
+  border-radius: 9999px;
+}
+
+.natio-calendar .rdp-button_previous:hover:not([disabled]),
+.natio-calendar .rdp-button_next:hover:not([disabled]) {
+  background-color: var(--color-bg-sunken);
+}
