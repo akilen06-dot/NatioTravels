@@ -225,6 +225,9 @@ create policy "users can insert their own profile" on profiles
 drop policy if exists "users can update their own profile" on profiles;
 create policy "users can update their own profile" on profiles
   for update using (auth.uid() = id);
+drop policy if exists "users can delete their own profile" on profiles;
+create policy "users can delete their own profile" on profiles
+  for delete using (auth.uid() = id);
 
 -- swipes: you can only ever create/change your own swipe, but you can READ
 -- any row where you're the target too — the app needs that to detect a
@@ -241,6 +244,9 @@ create policy "users can create their own swipes" on swipes
 drop policy if exists "users can update their own swipes" on swipes;
 create policy "users can update their own swipes" on swipes
   for update using (auth.uid() = swiper_id) with check (auth.uid() = swiper_id);
+drop policy if exists "users can delete their own swipes" on swipes;
+create policy "users can delete their own swipes" on swipes
+  for delete using (auth.uid() = swiper_id);
 
 -- matches: visible to either participant; created by the app layer (service-role-free,
 -- both rows already validated via the swipes policy above).
