@@ -9,9 +9,10 @@ import DatePicker from '../../components/DatePicker'
 import Button from '../../components/Button'
 import { useStore } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
-import { isStripeConfigured, createCheckoutSession } from '../../lib/api/billing'
+import { isPaddleConfigured, createPaddleTransaction } from '../../lib/api/billing'
+import { openPaddleCheckout } from '../../lib/paddle'
 
-const useRealCheckout = isBackendConfigured && isStripeConfigured
+const useRealCheckout = isBackendConfigured && isPaddleConfigured
 
 const paymentMethods = [
   { id: 'card', label: 'Card' },
@@ -66,12 +67,12 @@ export default function PlanSelect() {
     try {
       if (useRealCheckout) {
         // The Edge Function needs an authenticated Supabase user to attach
-        // the Checkout session to. For a brand-new signup that account
-        // doesn't exist yet, so create it first (with no plan — the Stripe
-        // webhook sets the real plan once payment succeeds).
+        // the transaction to. For a brand-new signup that account doesn't
+        // exist yet, so create it first (with no plan — the Paddle webhook
+        // sets the real plan once payment succeeds).
         if (!isRenewal) await skipPlanAndFinish()
-        const url = await createCheckoutSession(plan, billing)
-        window.location.href = url
+        const transactionId = await createPaddleTransaction(plan, billing)
+        await openPaddleCheckout(transactionId, `${window.location.origin}/discover?checkout=success`)
         return
       }
       if (isRenewal) {
@@ -283,7 +284,7 @@ export default function PlanSelect() {
           onClick={completePayment}
         >
           <Check size={18} weight="bold" />
-          {submitting ? 'Redirecting…' : 'Continue to Stripe Checkout'}
+          {submitting ? 'Opening checkout…' : 'Continue to checkout'}
         </Button>
       ) : (
         <>
@@ -396,7 +397,7 @@ export default function PlanSelect() {
 
       <p className="mt-4 text-center text-[12px] text-ink-faint">
         {useRealCheckout
-          ? "You'll enter your card on Stripe's secure checkout page."
+          ? "You'll enter your card on Paddle's secure checkout."
           : 'Prototype checkout. No real payment is processed.'}
       </p>
       <p className="mt-2 text-center text-[12px] text-ink-faint">

@@ -214,7 +214,7 @@ export const useStore = create(
         set({ travelers: allProfiles, likedIds: swiped.likedIds, passedIds: swiped.passedIds })
       },
 
-      // Re-pulls the signed-in user's own profile row. Needed after a Stripe
+      // Re-pulls the signed-in user's own profile row. Needed after a Paddle
       // Checkout redirect: the webhook updates `plan` on the server, but the
       // browser's local currentUser (persisted from before checkout) has no
       // way to know that on its own. A no-op in mock mode.

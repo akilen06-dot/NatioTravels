@@ -17,7 +17,7 @@ npm run dev
 - Optionally real, each independently switched on by adding its own keys to `.env.local` (the app works with none of them set — see [SETUP.md](SETUP.md)):
   - **Database & accounts** — Supabase Postgres + Auth, replacing the mock in-memory store.
   - **Location** — real browser geolocation + reverse geocoding, real distances between users.
-  - **Billing** — real Stripe Checkout for Trip Pass / Frequent Traveler (test mode).
+  - **Billing** — real Paddle checkout for Trip Pass / Frequent Traveler (sandbox mode).
 - Without those keys, everything falls back to local mock data persisted to `localStorage` (zustand `persist`), exactly like the original prototype.
 
 ## What's still simulated

@@ -8,7 +8,7 @@ import { useStore, hasAccess } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
 import { distanceKm } from '../../lib/api/matches'
 
-// After a Stripe redirect, the webhook that flips `plan` on the server can
+// After a Paddle redirect, the webhook that flips `plan` on the server can
 // lag the browser landing back on this page by a second or two — poll a
 // few times rather than giving up on the first empty check.
 const PAYMENT_CONFIRM_ATTEMPTS = 5
@@ -33,7 +33,7 @@ export default function DiscoverScreen() {
   )
   const triggerRef = useRef(null)
 
-  // Coming back from a real Stripe Checkout: the local currentUser is
+  // Coming back from a real Paddle Checkout: the local currentUser is
   // whatever it was before payment, so re-pull it from the server (which
   // the webhook has just updated) before deciding whether this user has
   // access.

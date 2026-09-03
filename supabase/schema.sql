@@ -26,8 +26,12 @@ create table if not exists profiles (
   notification_prefs jsonb not null default '{"matches":true,"messages":true,"groupActivity":true,"meetupReminders":true,"marketing":false}',
   device_permissions jsonb not null default '{"location":true,"camera":true,"notifications":true}',
   ad_preferences jsonb not null default '{"personalized":true}',
+  -- Unused now that billing runs on Paddle instead of Stripe — kept rather
+  -- than dropped so no data is lost if any project still has values here.
   stripe_customer_id text,
   stripe_subscription_id text,
+  paddle_customer_id text,
+  paddle_subscription_id text,
   -- True only for rows created by supabase/seed.mjs. Lets you tell demo
   -- profiles apart from real signups, and bulk-delete them before a real
   -- launch — see supabase/cleanup-seed-data.sql.
@@ -42,6 +46,8 @@ create table if not exists profiles (
 -- is_seed_data was added), `create table if not exists` above silently skips
 -- it — this backfills the column either way, safely, every time.
 alter table profiles add column if not exists is_seed_data boolean not null default false;
+alter table profiles add column if not exists paddle_customer_id text;
+alter table profiles add column if not exists paddle_subscription_id text;
 
 -- ============================================================================
 -- Swiping / matching

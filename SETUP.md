@@ -150,48 +150,56 @@ using the country you typed at signup and the seeded distance numbers.
 
 ---
 
-## Phase 4 — Real billing (Stripe)
+## Phase 4 — Real billing (Paddle)
 
 This is the most involved piece, since it needs Edge Functions deployed alongside your database.
+Paddle's **sandbox** is a fully separate environment from production — its own dashboard, its own
+API host, its own test data — rather than a "test mode" toggle on one account like Stripe's, so pay
+attention to which one you're in at each step below.
 
-1. Go to [stripe.com](https://stripe.com) and create an account (you can do everything below in
-   **test mode** without any business verification).
-2. In the Stripe Dashboard, create three Products/Prices:
-   - "Trip Pass" — one-time, $9.99
+1. Go to [paddle.com](https://paddle.com), create an account, and switch to the **Sandbox**
+   environment (there's a toggle in the dashboard) — no business verification needed there.
+2. In the Sandbox Dashboard, create three Products, each with one Price:
+   - "Trip Pass" — one-time (non-recurring), $9.99
    - "Frequent Traveler Monthly" — recurring monthly, $16.99
    - "Frequent Traveler Annual" — recurring yearly, $142.99
-   Copy each **Price ID** (`price_...`).
-3. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and log in, then from the
+   Copy each **Price ID** (`pri_...`).
+3. In **Developer Tools → Authentication**, copy your sandbox **API key** (`Bearer` key, starts
+   with a long string — this is `PADDLE_API_KEY`) and your **client-side token** (starts with
+   `test_` in sandbox — this is `VITE_PADDLE_CLIENT_TOKEN`).
+4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and log in, then from the
    `haven-app` folder:
    ```bash
    supabase link --project-ref your-project-ref
-   supabase secrets set STRIPE_SECRET_KEY=sk_test_... \
-     STRIPE_PRICE_TRIP=price_... \
-     STRIPE_PRICE_MONTHLY=price_... \
-     STRIPE_PRICE_ANNUAL=price_... \
-     SITE_URL=http://localhost:5173
-   supabase functions deploy create-checkout-session
-   supabase functions deploy stripe-webhook --no-verify-jwt
+   supabase secrets set PADDLE_API_KEY=... \
+     PADDLE_ENVIRONMENT=sandbox \
+     PADDLE_PRICE_TRIP=pri_... \
+     PADDLE_PRICE_MONTHLY=pri_... \
+     PADDLE_PRICE_ANNUAL=pri_...
+   supabase functions deploy create-paddle-transaction
+   supabase functions deploy paddle-webhook --no-verify-jwt
    ```
-4. In the Stripe Dashboard, go to **Developers → Webhooks → Add endpoint**, point it at your
-   deployed `stripe-webhook` function's URL, and select these events: `checkout.session.completed`,
-   `customer.subscription.updated`, `customer.subscription.deleted`. Copy the **Signing secret**
-   and set it too:
+5. In the Sandbox Dashboard, go to **Developer Tools → Notifications → Add destination**, point it
+   at your deployed `paddle-webhook` function's URL, and select these events: `transaction.completed`,
+   `subscription.created`, `subscription.updated`, `subscription.canceled`. Copy the destination's
+   **secret key** (`pdl_ntfset_...`) and set it too:
    ```bash
-   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+   supabase secrets set PADDLE_WEBHOOK_SECRET=pdl_ntfset_...
    ```
-5. Add the publishable key to `.env.local` (this one, unlike the others above, is safe in
-   frontend code — it's meant to be public):
+6. Add the client-side token to `.env.local` (this one, unlike the API key, is safe in frontend
+   code — it's meant to be public):
    ```
-   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   VITE_PADDLE_CLIENT_TOKEN=test_...
+   VITE_PADDLE_ENVIRONMENT=sandbox
    ```
-6. Restart the dev server, go to `/onboarding/plan`, and pay with Stripe's test card
-   `4242 4242 4242 4242`, any future expiry, any CVC. Confirm the `plan` column updates on your
-   `profiles` row in Supabase after the redirect back.
+7. Restart the dev server, go to `/onboarding/plan`, and pay with Paddle's sandbox test card
+   `4242 4242 4242 4242`, any name, any future expiry, any CVC. Confirm the `plan` column updates
+   on your `profiles` row in Supabase after the checkout closes and redirects back.
 
-**Going live (real charges) is a decision only you can make** — it needs your own verified
-Stripe business account and switching from `sk_test_.../pk_test_...` keys to live ones. Nothing
-in this codebase does that automatically.
+**Going live (real charges) is a decision only you can make** — it needs your own verified Paddle
+account (separate approval from sandbox), switching to the **production** dashboard and its own
+API key/client-side token/webhook destination, and setting `PADDLE_ENVIRONMENT=production` plus
+`VITE_PADDLE_ENVIRONMENT=production`. Nothing in this codebase does that automatically.
 
 ---
 

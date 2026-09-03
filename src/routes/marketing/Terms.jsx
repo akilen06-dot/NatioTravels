@@ -101,7 +101,7 @@ export default function Terms() {
           <p>
             <strong className="font-medium text-ink">Payment Processing:</strong> All payments are
             processed through secure, third-party, PCI-compliant payment gateways (e.g., Apple App
-            Store, Google Play Store, or Stripe). We do not store your full financial data.
+            Store, Google Play Store, or Paddle). We do not store your full financial data.
           </p>
           <p>
             <strong className="font-medium text-ink">Refund Policy:</strong> Except as explicitly

@@ -1,19 +1,20 @@
 import { supabase } from '../supabaseClient'
 
-// True once you've set VITE_STRIPE_PUBLISHABLE_KEY (frontend) and deployed
-// the create-checkout-session / stripe-webhook Edge Functions with their own
+// True once you've set VITE_PADDLE_CLIENT_TOKEN (frontend) and deployed the
+// create-paddle-transaction / paddle-webhook Edge Functions with their own
 // secrets (see SETUP.md). Until then PlanSelect falls back to the existing
-// mock checkout so the app keeps working without a Stripe account.
-export const isStripeConfigured = Boolean(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+// mock checkout so the app keeps working without a Paddle account.
+export const isPaddleConfigured = Boolean(import.meta.env.VITE_PADDLE_CLIENT_TOKEN)
 
-// Calls the create-checkout-session Edge Function and returns a Stripe
-// Checkout URL to redirect the browser to. Real card entry happens entirely
-// on Stripe's own page — no card data ever touches this app's frontend.
-export async function createCheckoutSession(plan, billing) {
-  const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+// Calls the create-paddle-transaction Edge Function and returns a Paddle
+// transaction id, passed straight into Paddle.js's overlay checkout (see
+// ../paddle.js). Real card entry happens entirely inside Paddle's own
+// checkout UI — no card data ever touches this app's frontend.
+export async function createPaddleTransaction(plan, billing) {
+  const { data, error } = await supabase.functions.invoke('create-paddle-transaction', {
     body: { plan, billing },
   })
   if (error) throw error
-  if (!data?.url) throw new Error('Stripe did not return a checkout URL.')
-  return data.url
+  if (!data?.transactionId) throw new Error('Paddle did not return a transaction id.')
+  return data.transactionId
 }
