@@ -61,7 +61,7 @@ export default function SignUp() {
   return (
     <OnboardingLayout
       step={1}
-      totalSteps={5}
+      totalSteps={4}
       title="Create your account"
       subtitle="We'll use this to verify you and match you with travelers from home."
     >

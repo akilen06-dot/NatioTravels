@@ -15,30 +15,24 @@ Restart `npm run dev` after editing `.env.local` (Vite only reads env files on s
 
 ---
 
-## Real ID + face verification (works out of the box, no setup)
+## Real ID capture (works out of the box, no setup)
 
 Unlike the other phases, this one needs no account, no API key, and no `.env.local` change —
-it's on right now. `/onboarding/verify` and `/onboarding/face-scan` do real work:
+it's on right now. `/onboarding/verify` does real work:
 
 - **ID photo**: "Take photo" opens your real camera; "Upload from gallery" reads a real file.
-- **Face scan**: opens your real camera, then extracts a face descriptor from the live feed and
-  from your ID photo using [`@vladmandic/face-api`](https://github.com/vladmandic/face-api)
-  (runs fully in the browser via TensorFlow.js — no server, no third party ever sees the photos)
-  and compares them. It only proceeds past the face-scan step on a real match.
 
 A few things worth knowing:
-- The model files live in `public/models/` (~6.9MB, committed to the repo). They're fetched
-  once and cached by the browser after that.
-- **The very first scan on a fresh page load is noticeably slower** (TF.js has to compile its
-  WebGL shaders the first time each model runs) — that's expected, not a bug. There's no timeout
-  on the "Checking…" state, so it just finishes when it finishes.
 - Camera access requires HTTPS (or `localhost`) — this is a browser security rule, not something
   in this app's control. It'll work fine both in local dev and once deployed to Vercel (which is
   HTTPS by default), but wouldn't work over plain `http://` on a real domain.
 - What this still doesn't do: verify the ID document itself is authentic (that it's a real
-  passport/ID and not a photo of a photo, edited, expired, etc.) — it only confirms the face in
-  front of the camera matches the face in the photo you provided. Real document authenticity
-  checking needs a KYC vendor (Persona, Onfido, Veriff) and is a separate, bigger integration.
+  passport/ID and not a photo of a photo, edited, expired, etc.), or that it belongs to the
+  person signing up. Real document authenticity checking needs a KYC vendor (Persona, Onfido,
+  Veriff) and is a separate, bigger integration. An earlier version of this app also did a live
+  face scan against the ID photo (client-side face matching); it was removed because it didn't
+  reliably confirm anything a KYC vendor wouldn't do properly — the ID photo capture above is
+  what remains.
 
 ---
 
@@ -191,10 +185,10 @@ in this codebase does that automatically.
 
 ## What's still simulated, even with everything above configured
 
-- **Face matching is real** (see the section above), but **document authenticity is not** — the
-  app confirms the live face matches the ID photo, not that the ID itself is a genuine,
-  unaltered, unexpired passport/ID. A real version of that needs a KYC vendor like Persona,
-  Onfido, or Veriff, plus a compliance review.
+- **ID document authenticity** — the app captures a passport/ID photo (see the section above) but
+  does not verify it's a genuine, unaltered, unexpired document, or that it belongs to the person
+  signing up. A real version of that needs a KYC vendor like Persona, Onfido, or Veriff, plus a
+  compliance review.
 - **Deleting your account** removes your `profiles` row (and everything that cascades from it),
   but doesn't delete the underlying Supabase Auth user — that needs a service-role action, which
   would be a small additional Edge Function.

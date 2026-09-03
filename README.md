@@ -13,7 +13,7 @@ npm run dev
 
 - The full React app: routing, screens, component structure, design system.
 - All UI state and interactions: signup/signin branching, swipe matching, group requests/accept/kick, messaging, plan selection, trip-expiry lockout.
-- **Face verification**: real camera access and real face matching (live scan vs. your ID photo), running fully in-browser — no setup required. See [SETUP.md](SETUP.md) for details.
+- **ID verification**: real camera access to capture a passport/ID photo (or upload one) during onboarding — no setup required.
 - Optionally real, each independently switched on by adding its own keys to `.env.local` (the app works with none of them set — see [SETUP.md](SETUP.md)):
   - **Database & accounts** — Supabase Postgres + Auth, replacing the mock in-memory store.
   - **Location** — real browser geolocation + reverse geocoding, real distances between users.
@@ -22,7 +22,7 @@ npm run dev
 
 ## What's still simulated
 
-- **ID document authenticity** — the app confirms your live face matches your ID photo; it does not verify the ID itself is a genuine, unaltered, unexpired document. That needs a KYC vendor (Persona, Onfido, Veriff) and a compliance review.
+- **ID document authenticity** — the app captures a passport/ID photo but doesn't verify it's a genuine, unaltered, unexpired document, or that it belongs to the person signing up. That needs a KYC vendor (Persona, Onfido, Veriff) and a compliance review.
 - **Anything not configured in `.env.local`** — see [SETUP.md](SETUP.md) for exactly what each phase needs and what's still simplified even once it's on (e.g. private-account enforcement is UI-level, not yet database RLS).
 
 ## Demo accounts

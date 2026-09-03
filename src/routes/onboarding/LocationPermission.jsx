@@ -39,7 +39,7 @@ export default function LocationPermission() {
   return (
     <OnboardingLayout
       step={2}
-      totalSteps={5}
+      totalSteps={4}
       title="Turn on location"
       subtitle="We use your location to show nearby travelers of your nationality. Your exact position is never shared, only an approximate distance."
     >

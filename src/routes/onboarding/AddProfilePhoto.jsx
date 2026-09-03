@@ -36,8 +36,8 @@ export default function AddProfilePhoto() {
 
   return (
     <OnboardingLayout
-      step={5}
-      totalSteps={5}
+      step={4}
+      totalSteps={4}
       title="Add a profile photo"
       subtitle="Help other travelers recognize you. You can always change this later."
       onSkip={handleContinue}

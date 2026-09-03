@@ -4,7 +4,7 @@ const steps = [
   {
     icon: Fingerprint,
     title: 'Verify who you are',
-    body: 'A quick passport photo and face scan confirm you are who you say you are, before you can message anyone.',
+    body: 'A quick passport or ID photo confirms you are who you say you are, before you can message anyone.',
     tint: 'bg-accent-tint text-accent-strong',
   },
   {

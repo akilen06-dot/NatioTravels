@@ -12,7 +12,6 @@ import ResetPassword from './routes/auth/ResetPassword'
 import OnboardingGuard, { PlanGuard } from './components/OnboardingGuard'
 import LocationPermission from './routes/onboarding/LocationPermission'
 import IdentityVerification from './routes/onboarding/IdentityVerification'
-import FaceScan from './routes/onboarding/FaceScan'
 import AddProfilePhoto from './routes/onboarding/AddProfilePhoto'
 import PlanSelect from './routes/onboarding/PlanSelect'
 import AppShell from './components/AppShell'
@@ -55,7 +54,6 @@ export default function App() {
       <Route element={<OnboardingGuard />}>
         <Route path="/onboarding/location" element={<LocationPermission />} />
         <Route path="/onboarding/verify" element={<IdentityVerification />} />
-        <Route path="/onboarding/face-scan" element={<FaceScan />} />
         <Route path="/onboarding/photo" element={<AddProfilePhoto />} />
       </Route>
       <Route element={<PlanGuard />}>

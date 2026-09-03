@@ -54,6 +54,13 @@ export async function swipe(userId, targetId, liked) {
   return { matched: true }
 }
 
+// Deletes every pass this user has made, so those people reappear in their
+// Discover deck. Liked swipes (and any matches they created) are untouched.
+export async function clearPasses(userId) {
+  const { error } = await supabase.from('swipes').delete().eq('swiper_id', userId).eq('liked', false)
+  if (error) throw error
+}
+
 export async function undoSwipe(userId, targetId) {
   const { error } = await supabase
     .from('swipes')

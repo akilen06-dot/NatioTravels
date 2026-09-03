@@ -53,7 +53,6 @@ const initialDraft = {
   dob: '',
   idCaptured: false,
   idPhoto: '',
-  faceVerified: false,
   photo: '',
   city: '',
   lat: null,
@@ -146,19 +145,33 @@ export const useStore = create(
         })
       },
 
-      // Re-pulls the traveler pool and this user's swipe history, so newly
-      // signed-up real travelers (and anything swiped from another device)
-      // show up without needing to sign back in. A no-op in mock mode, where
-      // the traveler pool is static.
+      // Brings back everyone this user has passed on (they go back into the
+      // Discover deck for another look), and re-pulls the traveler pool so
+      // newly signed-up real travelers show up too. Liked/matched people are
+      // untouched — this only clears passes.
       refreshDiscover: async () => {
-        if (!isBackendConfigured) return
+        if (!isBackendConfigured) {
+          set({ passedIds: [] })
+          return
+        }
         const userId = get().currentUser?.id
         if (!userId) return
+        await matchesApi.clearPasses(userId)
         const [allProfiles, swiped] = await Promise.all([
           profilesApi.listProfiles(userId),
           matchesApi.listSwipedIds(userId),
         ])
         set({ travelers: allProfiles, likedIds: swiped.likedIds, passedIds: swiped.passedIds })
+      },
+
+      // Re-pulls the signed-in user's own profile row. Needed after a Stripe
+      // Checkout redirect: the webhook updates `plan` on the server, but the
+      // browser's local currentUser (persisted from before checkout) has no
+      // way to know that on its own. A no-op in mock mode.
+      refreshCurrentUser: async () => {
+        if (!isBackendConfigured) return
+        const profile = await profilesApi.getCurrentAuthedProfile()
+        set({ currentUser: profile })
       },
 
       // `identifier` can be either an email or a username.

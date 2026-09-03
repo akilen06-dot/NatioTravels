@@ -42,7 +42,7 @@ export default function IdentityVerification() {
     if (!dobValid || !captured) return
     setDraftField('dob', dob)
     setDraftField('idCaptured', true)
-    navigate('/onboarding/face-scan')
+    navigate('/onboarding/photo')
   }
 
   function handleCapture() {
@@ -70,7 +70,7 @@ export default function IdentityVerification() {
   return (
     <OnboardingLayout
       step={3}
-      totalSteps={5}
+      totalSteps={4}
       title="Verify your identity"
       subtitle="A passport or ID photo confirms you're a real, matching traveler before you can message anyone."
     >
@@ -170,7 +170,7 @@ export default function IdentityVerification() {
                   Photo captured
                 </p>
                 <p className="text-[12.5px] text-ink-muted">
-                  We'll match this against a live face scan next.
+                  We'll use this to confirm you're a real traveler.
                 </p>
               </div>
               <button

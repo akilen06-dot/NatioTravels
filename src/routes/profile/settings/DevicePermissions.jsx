@@ -5,7 +5,7 @@ import { useStore, DEFAULT_DEVICE_PERMISSIONS } from '../../../lib/store'
 
 const ROWS = [
   { key: 'location', icon: MapPinLine, label: 'Location', hint: 'Needed to match you with nearby travelers' },
-  { key: 'camera', icon: Camera, label: 'Camera', hint: 'Used for ID verification and the face scan' },
+  { key: 'camera', icon: Camera, label: 'Camera', hint: 'Used for ID verification' },
   { key: 'notifications', icon: Bell, label: 'Push notifications', hint: 'Alerts for matches, messages, and meetups' },
 ]
 

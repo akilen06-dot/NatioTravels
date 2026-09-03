@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowClockwise, ArrowCounterClockwise } from '@phosphor-icons/react'
 import SwipeCard, { SwipeButton } from './SwipeCard'
 import MatchModal from './MatchModal'
@@ -7,7 +8,15 @@ import { useStore, hasAccess } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
 import { distanceKm } from '../../lib/api/matches'
 
+// After a Stripe redirect, the webhook that flips `plan` on the server can
+// lag the browser landing back on this page by a second or two — poll a
+// few times rather than giving up on the first empty check.
+const PAYMENT_CONFIRM_ATTEMPTS = 5
+const PAYMENT_CONFIRM_DELAY_MS = 1500
+
 export default function DiscoverScreen() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const currentUser = useStore((s) => s.currentUser)
   const travelers = useStore((s) => s.travelers)
   const likedIds = useStore((s) => s.likedIds)
@@ -16,9 +25,36 @@ export default function DiscoverScreen() {
   const swipe = useStore((s) => s.swipe)
   const undoLastSwipe = useStore((s) => s.undoLastSwipe)
   const refreshDiscover = useStore((s) => s.refreshDiscover)
+  const refreshCurrentUser = useStore((s) => s.refreshCurrentUser)
   const [matched, setMatched] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [confirmingPayment, setConfirmingPayment] = useState(
+    isBackendConfigured && searchParams.get('checkout') === 'success',
+  )
   const triggerRef = useRef(null)
+
+  // Coming back from a real Stripe Checkout: the local currentUser is
+  // whatever it was before payment, so re-pull it from the server (which
+  // the webhook has just updated) before deciding whether this user has
+  // access.
+  useEffect(() => {
+    if (!confirmingPayment) return
+    navigate('/discover', { replace: true })
+    let cancelled = false
+    ;(async () => {
+      for (let attempt = 0; attempt < PAYMENT_CONFIRM_ATTEMPTS; attempt++) {
+        await refreshCurrentUser()
+        if (cancelled) return
+        if (hasAccess(useStore.getState().currentUser)) break
+        await new Promise((resolve) => setTimeout(resolve, PAYMENT_CONFIRM_DELAY_MS))
+      }
+      if (!cancelled) setConfirmingPayment(false)
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -31,6 +67,14 @@ export default function DiscoverScreen() {
     .map((t) =>
       isBackendConfigured ? { ...t, distanceKm: distanceKm(currentUser, t) ?? '?' } : t,
     )
+
+  if (confirmingPayment) {
+    return (
+      <div className="flex h-full items-center justify-center px-5 py-8">
+        <p className="text-[13.5px] text-ink-muted">Confirming your payment…</p>
+      </div>
+    )
+  }
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -64,7 +108,8 @@ export default function DiscoverScreen() {
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          aria-label="Refresh"
+          aria-label="Review skipped travelers"
+          title="Bring back people you've skipped"
           className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken disabled:opacity-50 cursor-pointer"
         >
           <ArrowClockwise size={18} className={refreshing ? 'animate-spin' : ''} />
