@@ -146,6 +146,21 @@ export const useStore = create(
         })
       },
 
+      // Re-pulls the traveler pool and this user's swipe history, so newly
+      // signed-up real travelers (and anything swiped from another device)
+      // show up without needing to sign back in. A no-op in mock mode, where
+      // the traveler pool is static.
+      refreshDiscover: async () => {
+        if (!isBackendConfigured) return
+        const userId = get().currentUser?.id
+        if (!userId) return
+        const [allProfiles, swiped] = await Promise.all([
+          profilesApi.listProfiles(userId),
+          matchesApi.listSwipedIds(userId),
+        ])
+        set({ travelers: allProfiles, likedIds: swiped.likedIds, passedIds: swiped.passedIds })
+      },
+
       // `identifier` can be either an email or a username.
       attemptSignIn: async (identifier, password) => {
         if (isBackendConfigured) {

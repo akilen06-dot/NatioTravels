@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -133,9 +133,18 @@ export default function PersonProfile() {
   const allPosts = useStore((s) => s.posts)
   const posts = allPosts.filter((p) => p.authorId === id && !p.archived)
   const threadId = `match-${id}`
-  const hasThread = useStore((s) => !!s.threads[threadId])
+  const hasThread = useStore((s) => !!s.threads[threadId] || s.matches.includes(id))
   const blockedIds = useStore((s) => s.blockedIds)
   const isBlocked = blockedIds.includes(id)
+  const refreshThreads = useStore((s) => s.refreshThreads)
+
+  // A match made from the other side (or on another device) might not be in
+  // this session's local threads/matches cache yet — refresh once so the
+  // "Message" button shows up without needing to sign back in.
+  useEffect(() => {
+    refreshThreads()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   if (!person) {
     return <p className="p-8 text-center text-ink-muted">Profile not found.</p>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowCounterClockwise } from '@phosphor-icons/react'
+import { ArrowClockwise, ArrowCounterClockwise } from '@phosphor-icons/react'
 import SwipeCard, { SwipeButton } from './SwipeCard'
 import MatchModal from './MatchModal'
 import TripLockedNotice from '../../components/TripLockedNotice'
@@ -15,8 +15,16 @@ export default function DiscoverScreen() {
   const blockedIds = useStore((s) => s.blockedIds)
   const swipe = useStore((s) => s.swipe)
   const undoLastSwipe = useStore((s) => s.undoLastSwipe)
+  const refreshDiscover = useStore((s) => s.refreshDiscover)
   const [matched, setMatched] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
   const triggerRef = useRef(null)
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    await refreshDiscover()
+    setRefreshing(false)
+  }
 
   const deck = travelers
     .filter((t) => !likedIds.includes(t.id) && !passedIds.includes(t.id) && !blockedIds.includes(t.id))
@@ -47,11 +55,20 @@ export default function DiscoverScreen() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center px-5 py-8">
-      <div className="w-full text-center">
+      <div className="relative w-full text-center">
         <h1 className="text-xl font-semibold text-ink">Discover</h1>
         <p className="mt-1 text-[13.5px] text-ink-muted">
           Travelers of your nationality, nearby right now.
         </p>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          aria-label="Refresh"
+          className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken disabled:opacity-50 cursor-pointer"
+        >
+          <ArrowClockwise size={18} className={refreshing ? 'animate-spin' : ''} />
+        </button>
       </div>
 
       <div className="relative mt-6 h-[480px] w-full max-w-[340px]">
