@@ -80,6 +80,14 @@ create table if not exists messages (
   created_at timestamptz not null default now()
 );
 
+-- A message can now be an attachment with no caption, so `text` needs to be
+-- allowed empty. Same "create table if not exists doesn't add columns"
+-- situation as profiles.is_seed_data above — these run safely every time.
+alter table messages alter column text drop not null;
+alter table messages add column if not exists attachment_url text;
+alter table messages add column if not exists attachment_type text check (attachment_type in ('image', 'file'));
+alter table messages add column if not exists attachment_name text;
+
 -- ============================================================================
 -- Groups
 -- ============================================================================
@@ -161,6 +169,24 @@ create table if not exists reports (
   created_at timestamptz not null default now()
 );
 
+-- ============================================================================
+-- Notifications — "X liked your post", "X swiped right on you", "X sent you
+-- a message". Written by the app layer at the same time as the action that
+-- causes it (a post like, a right-swipe, a message) rather than a trigger,
+-- same "service-role-free" pattern as matches/conversations above.
+-- ============================================================================
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade, -- recipient
+  actor_id uuid not null references profiles(id) on delete cascade, -- who did it
+  type text not null check (type in ('post_like', 'swipe_like', 'message')),
+  post_id uuid references posts(id) on delete cascade,
+  conversation_id uuid references conversations(id) on delete cascade,
+  preview text,
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 -- Lets the signup form check username availability before an account exists
 -- (RLS below requires auth, so an anonymous visitor can't query `profiles`
 -- directly). SECURITY DEFINER exposes only this yes/no answer, nothing else.
@@ -210,6 +236,7 @@ alter table post_likes enable row level security;
 alter table post_comments enable row level security;
 alter table blocks enable row level security;
 alter table reports enable row level security;
+alter table notifications enable row level security;
 
 -- Every policy below is preceded by a `drop policy if exists` so this whole
 -- script can be re-run safely (e.g. after pulling a schema update) without
@@ -379,3 +406,32 @@ create policy "users manage their own blocks" on blocks
 drop policy if exists "users manage their own reports" on reports;
 create policy "users manage their own reports" on reports
   for all using (auth.uid() = reporter_id) with check (auth.uid() = reporter_id);
+
+-- notifications: you can only read/update(mark read)/delete your own; anyone
+-- signed in can create one addressed to someone else (as themselves), same
+-- as how matches/conversations get created client-side.
+drop policy if exists "users can read their own notifications" on notifications;
+create policy "users can read their own notifications" on notifications
+  for select using (auth.uid() = user_id);
+drop policy if exists "users can create notifications for others" on notifications;
+create policy "users can create notifications for others" on notifications
+  for insert with check (auth.uid() = actor_id);
+drop policy if exists "users can update their own notifications" on notifications;
+create policy "users can update their own notifications" on notifications
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "users can delete their own notifications" on notifications;
+create policy "users can delete their own notifications" on notifications
+  for delete using (auth.uid() = user_id);
+
+-- Realtime: lets the app get a live push the moment a notification row is
+-- inserted (so a "someone messaged you" toast can pop up without polling).
+-- Idempotent — ALTER PUBLICATION has no "ADD TABLE IF NOT EXISTS", so check first.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications'
+  ) then
+    alter publication supabase_realtime add table notifications;
+  end if;
+end $$;

@@ -74,6 +74,18 @@ users tried to match before you applied the fix, run
 Editor — it finds any pair with reciprocal likes and creates the match/conversation they should
 have gotten. Safe to run more than once; new matches going forward don't need this.
 
+### Notifications, message attachments, group deletion
+
+These landed after the initial schema — if your project's SQL Editor hasn't run the latest
+`schema.sql` yet, re-run the whole file (safe/idempotent, same as always). It adds:
+- A `notifications` table (likes, right-swipes, messages) with a Realtime publication, so a
+  toast can pop up live while the app is open — no extra dashboard step needed, the SQL enables
+  it itself.
+- `attachment_url`/`attachment_type`/`attachment_name` columns on `messages`, for photo/file
+  sends in chat.
+- Nothing new for group deletion — the owner-can-delete policy was already part of the original
+  schema, only the app UI to trigger it was missing.
+
 ### Recreating the demo accounts (optional)
 
 The mock demo accounts (Maria/James/Elena + the 6 seed travelers) aren't real logins until you

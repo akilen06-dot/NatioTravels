@@ -6,9 +6,11 @@ import {
   MagnifyingGlass,
   UsersThree,
   UserCircle,
+  Bell,
 } from '@phosphor-icons/react'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
+import NotificationToasts from './NotificationToasts'
 import { useStore } from '../lib/store'
 import { useT } from '../lib/i18n'
 
@@ -17,26 +19,35 @@ const navItems = [
   { to: '/search', label: 'Search', icon: MagnifyingGlass },
   { to: '/groups', label: 'Groups', icon: UsersThree },
   { to: '/messages', label: 'Messages', icon: ChatCircleDots },
+  { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ]
 
 function NavItems({ orientation }) {
   const t = useT()
+  const unreadCount = useStore((s) => s.notifications.filter((n) => !n.read).length)
   return navItems.map(({ to, label, icon: Icon }) => (
     <NavLink
       key={to}
       to={to}
       className={({ isActive }) =>
         orientation === 'side'
-          ? `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14.5px] font-medium transition-colors duration-200 ${
+          ? `relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14.5px] font-medium transition-colors duration-200 ${
               isActive ? 'bg-accent-tint text-accent-strong' : 'text-ink-muted hover:bg-bg-sunken hover:text-ink'
             }`
-          : `flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors duration-200 ${
+          : `relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors duration-200 ${
               isActive ? 'text-accent-strong' : 'text-ink-faint'
             }`
       }
     >
-      <Icon size={orientation === 'side' ? 19 : 22} weight="regular" />
+      <span className="relative inline-flex">
+        <Icon size={orientation === 'side' ? 19 : 22} weight="regular" />
+        {label === 'Notifications' && unreadCount > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9.5px] font-semibold text-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </span>
       {t(label)}
     </NavLink>
   ))
@@ -53,6 +64,7 @@ export default function AppShell() {
 
   return (
     <div className="flex min-h-dvh bg-bg">
+      <NotificationToasts />
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border p-4 md:flex">
         <div className="flex items-center gap-2 px-2 py-2">
           <Logo size={26} />

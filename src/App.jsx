@@ -21,6 +21,7 @@ import GroupDetail from './routes/groups/GroupDetail'
 import CreateGroup from './routes/groups/CreateGroup'
 import MessagesScreen from './routes/messages/MessagesScreen'
 import ChatThread from './routes/messages/ChatThread'
+import NotificationsScreen from './routes/notifications/NotificationsScreen'
 import ProfileScreen from './routes/profile/ProfileScreen'
 import SafetyCenter from './routes/profile/SafetyCenter'
 import NewPost from './routes/profile/NewPost'
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/groups/:id" element={<GroupDetail />} />
         <Route path="/messages" element={<MessagesScreen />} />
         <Route path="/messages/:id" element={<ChatThread />} />
+        <Route path="/notifications" element={<NotificationsScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/profile/new" element={<NewPost />} />
         <Route path="/profile/edit" element={<EditProfile />} />

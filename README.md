@@ -12,7 +12,7 @@ npm run dev
 ## What's real
 
 - The full React app: routing, screens, component structure, design system.
-- All UI state and interactions: signup/signin branching, swipe matching, group requests/accept/kick, messaging, plan selection, trip-expiry lockout.
+- All UI state and interactions: signup/signin branching, swipe matching, group requests/accept/kick, messaging (including photo/file attachments), notifications (likes, right-swipes, messages — with live pop-ups once a real backend is configured), group deletion by its owner, plan selection, trip-expiry lockout.
 - **ID verification**: real camera access to capture a passport/ID photo (or upload one) during onboarding — no setup required.
 - Optionally real, each independently switched on by adding its own keys to `.env.local` (the app works with none of them set — see [SETUP.md](SETUP.md)):
   - **Database & accounts** — Supabase Postgres + Auth, replacing the mock in-memory store.

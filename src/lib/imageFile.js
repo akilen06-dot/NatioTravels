@@ -1,3 +1,24 @@
+// There's no real object storage in this app — every file, image or not,
+// ends up inlined as a data URL in a Postgres text column (or localStorage
+// in mock mode). Fine at prototype scale, but this cap keeps a stray large
+// upload from bloating a row or blowing the localStorage quota.
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024
+
+// Reads any file (PDF, doc, zip, etc.) as-is into a data URL, size-capped
+// since — unlike images — it isn't resized down first.
+export function readFileAsDataUrl(file, { maxBytes = MAX_ATTACHMENT_BYTES } = {}) {
+  return new Promise((resolve, reject) => {
+    if (file.size > maxBytes) {
+      reject(new Error(`That file is too big to send (max ${Math.round(maxBytes / 1024 / 1024)}MB).`))
+      return
+    }
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error("Couldn't read that file."))
+    reader.onload = () => resolve(reader.result)
+    reader.readAsDataURL(file)
+  })
+}
+
 // Reads an image file and downscales it to a JPEG data URL. Keeps uploaded
 // photos small enough to live comfortably in localStorage (this prototype
 // has no real backend/object storage) while still looking sharp in the UI.

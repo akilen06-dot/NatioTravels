@@ -40,6 +40,12 @@ export async function createGroup(ownerId, data) {
   return group.id
 }
 
+// RLS restricts this to the group's owner; cascades to members/requests/ratings.
+export async function deleteGroup(groupId) {
+  const { error } = await supabase.from('groups').delete().eq('id', groupId)
+  if (error) throw error
+}
+
 export async function requestToJoin(groupId, userId) {
   const { error } = await supabase
     .from('group_join_requests')

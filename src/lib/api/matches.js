@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient'
 import { getOrCreateConversation } from './messages'
+import { notify } from './notifications'
 
 function pairKey(a, b) {
   return a < b ? [a, b] : [b, a]
@@ -35,6 +36,8 @@ export async function swipe(userId, targetId, liked) {
     .upsert({ swiper_id: userId, target_id: targetId, liked }, { onConflict: 'swiper_id,target_id' })
   if (error) throw error
   if (!liked) return { matched: false }
+
+  await notify(targetId, userId, 'swipe_like')
 
   const { data: reciprocal } = await supabase
     .from('swipes')

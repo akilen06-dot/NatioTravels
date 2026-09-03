@@ -14,6 +14,12 @@ import * as groupsApi from './api/groups'
 import * as messagesApi from './api/messages'
 import * as postsApi from './api/posts'
 import * as moderationApi from './api/moderation'
+import * as notificationsApi from './api/notifications'
+
+// The live realtime subscription's unsubscribe function. Kept outside the
+// store (not in state) since it's not JSON-serializable and persist() would
+// otherwise try to snapshot it.
+let notificationsUnsub = null
 
 function calcAge(dob) {
   if (!dob) return null
@@ -83,6 +89,8 @@ export const useStore = create(
       signInError: '',
       blockedIds: [],
       reports: [],
+      notifications: [],
+      toasts: [],
 
       beginSignUp: (fields) =>
         set({
@@ -101,7 +109,7 @@ export const useStore = create(
         if (!isBackendConfigured) return
         const userId = get().currentUser?.id
         if (!userId) return
-        const [allProfiles, matchedIds, swiped, groups, threads, posts, blockedIds, reports] =
+        const [allProfiles, matchedIds, swiped, groups, threads, posts, blockedIds, reports, notifications] =
           await Promise.all([
             profilesApi.listProfiles(userId),
             matchesApi.listMatchedIds(userId),
@@ -111,6 +119,15 @@ export const useStore = create(
             postsApi.listPosts(),
             moderationApi.listBlockedIds(userId),
             moderationApi.listReports(userId),
+            // Caught locally, not left to reject the whole Promise.all: the
+            // `notifications` table only exists once schema.sql has been
+            // re-run on this project, and the rest of the app hydrating
+            // (travelers, matches, threads, posts...) shouldn't depend on
+            // that migration having happened yet.
+            notificationsApi.listNotifications(userId).catch((err) => {
+              console.error('Failed to load notifications:', err)
+              return []
+            }),
           ])
         set({
           travelers: allProfiles,
@@ -122,7 +139,40 @@ export const useStore = create(
           threads: Object.fromEntries(threads.map((t) => [t.id, t])),
           posts,
           blockedIds,
+          notifications,
         })
+
+        // Live push for new notifications (e.g. "someone messaged you")
+        // while the app is open. Replaces any earlier subscription so
+        // signing in as someone else never leaks the previous user's feed.
+        notificationsUnsub?.()
+        notificationsUnsub = notificationsApi.subscribeToNotifications(userId, (notif) => {
+          set((s) => ({ notifications: [notif, ...s.notifications] }))
+          get().pushToast(notif)
+        })
+      },
+
+      // Adds a toast and auto-dismisses it a few seconds later.
+      pushToast: (notif) => {
+        const id = `toast-${notif.id}`
+        set((s) => ({ toasts: [...s.toasts, { ...notif, toastId: id }] }))
+        setTimeout(() => get().dismissToast(id), 6000)
+      },
+
+      dismissToast: (toastId) =>
+        set((s) => ({ toasts: s.toasts.filter((t) => t.toastId !== toastId) })),
+
+      markNotificationsRead: async () => {
+        const userId = get().currentUser?.id
+        if (!userId) return
+        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) }))
+        if (isBackendConfigured) {
+          try {
+            await notificationsApi.markAllRead(userId)
+          } catch (err) {
+            console.error('Failed to mark notifications read:', err)
+          }
+        }
       },
 
       // Matches don't only happen from your own swipe — the other person
@@ -332,7 +382,9 @@ export const useStore = create(
 
       signOut: async () => {
         if (isBackendConfigured) await profilesApi.signOut()
-        set({ auth: 'signed-out', currentUser: null, draft: { ...initialDraft } })
+        notificationsUnsub?.()
+        notificationsUnsub = null
+        set({ auth: 'signed-out', currentUser: null, draft: { ...initialDraft }, notifications: [], toasts: [] })
       },
 
       // Always resolves { ok: true } — never reveals whether the email is
@@ -703,10 +755,20 @@ export const useStore = create(
         }))
       },
 
-      sendMessage: async (threadId, text) => {
+      deleteGroup: async (groupId) => {
+        if (isBackendConfigured) {
+          await groupsApi.deleteGroup(groupId)
+          set({ groups: await groupsApi.listGroups() })
+          return
+        }
+        set((s) => ({ groups: s.groups.filter((g) => g.id !== groupId) }))
+      },
+
+      // `attachment` is { url, type: 'image' | 'file', name } or undefined.
+      sendMessage: async (threadId, text, attachment) => {
         if (isBackendConfigured) {
           const otherId = threadId.replace(/^match-/, '')
-          await messagesApi.sendMessage(get().currentUser.id, otherId, text)
+          await messagesApi.sendMessage(get().currentUser.id, otherId, text, attachment)
           const threads = await messagesApi.listConversations(get().currentUser.id)
           set({ threads: Object.fromEntries(threads.map((t) => [t.id, t])) })
           return
@@ -714,7 +776,13 @@ export const useStore = create(
         set((s) => {
           const thread = s.threads[threadId]
           if (!thread) return s
-          const msg = { id: `m-${Date.now()}`, from: 'me', text, at: new Date().toISOString() }
+          const msg = {
+            id: `m-${Date.now()}`,
+            from: 'me',
+            text,
+            attachment: attachment || null,
+            at: new Date().toISOString(),
+          }
           return {
             threads: { ...s.threads, [threadId]: { ...thread, messages: [...thread.messages, msg] } },
           }
@@ -754,7 +822,7 @@ export const useStore = create(
         const uid = get().currentUser?.id
         if (isBackendConfigured) {
           const post = get().posts.find((p) => p.id === postId)
-          await postsApi.toggleLikePost(postId, uid, !!post?.likedBy.includes(uid))
+          await postsApi.toggleLikePost(postId, uid, !!post?.likedBy.includes(uid), post?.authorId)
           set({ posts: await postsApi.listPosts() })
           return
         }
@@ -794,6 +862,8 @@ export const useStore = create(
 
       deleteMyData: async () => {
         const s = get()
+        notificationsUnsub?.()
+        notificationsUnsub = null
         if (isBackendConfigured) {
           await profilesApi.deleteMyProfile(s.currentUser.id)
           set({
@@ -805,6 +875,8 @@ export const useStore = create(
             passedIds: [],
             blockedIds: [],
             reports: [],
+            notifications: [],
+            toasts: [],
           })
           return
         }
@@ -819,6 +891,8 @@ export const useStore = create(
           passedIds: [],
           blockedIds: [],
           reports: [],
+          notifications: [],
+          toasts: [],
         })
       },
     }),

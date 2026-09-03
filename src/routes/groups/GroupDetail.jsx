@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CalendarBlank, Check, MapPinLine, ProhibitInset, Star, UserMinus, X } from '@phosphor-icons/react'
+import { CalendarBlank, Check, MapPinLine, ProhibitInset, Star, Trash, UserMinus, X } from '@phosphor-icons/react'
 import Button from '../../components/Button'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import RatingPrompt from '../../components/RatingPrompt'
@@ -34,8 +34,11 @@ export default function GroupDetail() {
   const kickMember = useStore((s) => s.kickMember)
   const leaveGroup = useStore((s) => s.leaveGroup)
   const requestToJoin = useStore((s) => s.requestToJoin)
+  const deleteGroup = useStore((s) => s.deleteGroup)
   const blockedIds = useStore((s) => s.blockedIds)
   const [confirmKick, setConfirmKick] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -140,6 +143,46 @@ export default function GroupDetail() {
         <Button variant="secondary" className="mt-6" onClick={() => leaveGroup(group.id)}>
           Leave group
         </Button>
+      )}
+
+      {isOwner && (
+        <div className="mt-6">
+          {confirmDelete ? (
+            <div className="flex items-center gap-2.5 rounded-2xl border border-danger/40 bg-danger-tint p-3.5">
+              <p className="flex-1 text-[13px] text-danger">
+                Delete this group for everyone? This can't be undone.
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="rounded-full px-2.5 py-1.5 text-[12.5px] text-ink-muted hover:bg-bg-sunken cursor-pointer"
+              >
+                Cancel
+              </button>
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true)
+                  await deleteGroup(group.id)
+                  navigate('/groups')
+                }}
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 text-[13px] font-medium text-danger cursor-pointer"
+            >
+              <Trash size={15} />
+              Delete group
+            </button>
+          )}
+        </div>
       )}
 
       {isOwner && visiblePendingRequests.length > 0 && (

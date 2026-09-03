@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { notify } from './notifications'
 
 function mapPostRow(row, likes, comments) {
   return {
@@ -45,16 +46,17 @@ export async function setPostArchived(postId, archived) {
   if (error) throw error
 }
 
-export async function toggleLikePost(postId, userId, currentlyLiked) {
+export async function toggleLikePost(postId, userId, currentlyLiked, authorId) {
   if (currentlyLiked) {
     const { error } = await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', userId)
     if (error) throw error
-  } else {
-    const { error } = await supabase
-      .from('post_likes')
-      .upsert({ post_id: postId, user_id: userId }, { onConflict: 'post_id,user_id' })
-    if (error) throw error
+    return
   }
+  const { error } = await supabase
+    .from('post_likes')
+    .upsert({ post_id: postId, user_id: userId }, { onConflict: 'post_id,user_id' })
+  if (error) throw error
+  if (authorId) await notify(authorId, userId, 'post_like', { postId })
 }
 
 export async function addPostComment(postId, authorId, text) {
