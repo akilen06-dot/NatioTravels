@@ -55,10 +55,14 @@ async function isValidSignature(rawBody: string, header: string | null): Promise
 Deno.serve(async (req) => {
   const rawBody = await req.text()
   const valid = await isValidSignature(rawBody, req.headers.get('paddle-signature'))
-  if (!valid) return new Response('Invalid signature', { status: 400 })
+  if (!valid) {
+    console.error('paddle-webhook: invalid signature')
+    return new Response('Invalid signature', { status: 400 })
+  }
 
   const event = JSON.parse(rawBody)
   const data = event.data ?? {}
+  console.log(`paddle-webhook: received ${event.event_type}`)
 
   switch (event.event_type) {
     // Only acts on a Trip Pass purchase (a one-time, non-recurring price) —

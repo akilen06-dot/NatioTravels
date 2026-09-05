@@ -106,6 +106,10 @@ Deno.serve(async (req) => {
 
     return json({ transactionId: transaction.id })
   } catch (err) {
+    // Logged explicitly — the Dashboard's Logs tab only shows boot/shutdown
+    // events otherwise, and the Invocations tab's response body is easy to
+    // miss. console.error here makes the real reason show up in Logs too.
+    console.error('create-paddle-transaction failed:', err)
     return json({ error: err instanceof Error ? err.message : 'Could not create checkout' }, 500)
   }
 })
