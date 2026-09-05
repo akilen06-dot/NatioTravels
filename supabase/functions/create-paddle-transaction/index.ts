@@ -85,11 +85,22 @@ Deno.serve(async (req) => {
 
     let customerId = profile?.paddle_customer_id
     if (!customerId) {
-      const customer = await paddleFetch('/customers', {
-        method: 'POST',
-        body: JSON.stringify({ email: profile?.email ?? user.email }),
-      })
-      customerId = customer.id
+      const email = profile?.email ?? user.email
+      // A customer with this email may already exist in Paddle from an
+      // earlier attempt (e.g. one that created the customer but failed
+      // before this row got updated) — Paddle's create-customer call
+      // rejects a duplicate email outright, so look it up first instead of
+      // assuming this user has no Paddle customer yet.
+      const existing = await paddleFetch(`/customers?email=${encodeURIComponent(email)}`, { method: 'GET' })
+      if (existing?.length) {
+        customerId = existing[0].id
+      } else {
+        const customer = await paddleFetch('/customers', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+        })
+        customerId = customer.id
+      }
       await supabase.from('profiles').update({ paddle_customer_id: customerId }).eq('id', user.id)
     }
 
