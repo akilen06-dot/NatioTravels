@@ -528,14 +528,14 @@ export const useStore = create(
         set((s) => ({ blockedIds: s.blockedIds.filter((x) => x !== id) }))
       },
 
-      reportUser: async (id, reason) => {
+      reportUser: async (id, reason, details) => {
         if (isBackendConfigured) {
-          await moderationApi.reportUser(get().currentUser.id, id, reason)
+          await moderationApi.reportUser(get().currentUser.id, id, reason, details)
         }
         set((s) => ({
           reports: [
             ...s.reports,
-            { id: `report-${Date.now()}`, targetId: id, reason, at: new Date().toISOString() },
+            { id: `report-${Date.now()}`, targetId: id, reason, details: details || '', at: new Date().toISOString() },
           ],
         }))
       },

@@ -29,10 +29,18 @@ export async function listReports(userId) {
     .eq('reporter_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data || []).map((r) => ({ id: r.id, targetId: r.target_id, reason: r.reason, at: r.created_at }))
+  return (data || []).map((r) => ({
+    id: r.id,
+    targetId: r.target_id,
+    reason: r.reason,
+    details: r.details ?? '',
+    at: r.created_at,
+  }))
 }
 
-export async function reportUser(reporterId, targetId, reason) {
-  const { error } = await supabase.from('reports').insert({ reporter_id: reporterId, target_id: targetId, reason })
+export async function reportUser(reporterId, targetId, reason, details) {
+  const { error } = await supabase
+    .from('reports')
+    .insert({ reporter_id: reporterId, target_id: targetId, reason, details: details || null })
   if (error) throw error
 }

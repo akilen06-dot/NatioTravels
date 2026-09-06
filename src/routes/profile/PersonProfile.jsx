@@ -27,7 +27,9 @@ function FlagMenu({ personId, personName, isBlocked }) {
   const unblockUser = useStore((s) => s.unblockUser)
   const reportUser = useStore((s) => s.reportUser)
   const [open, setOpen] = useState(false)
-  const [mode, setMode] = useState('menu') // menu | report | reported
+  const [mode, setMode] = useState('menu') // menu | report | details | reported
+  const [reasonId, setReasonId] = useState(null)
+  const [details, setDetails] = useState('')
 
   function handleBlock() {
     blockUser(personId)
@@ -36,8 +38,13 @@ function FlagMenu({ personId, personName, isBlocked }) {
     navigate('/profile/settings/blocked')
   }
 
-  function handleReport(reasonId) {
-    reportUser(personId, reasonId)
+  function chooseReason(id) {
+    setReasonId(id)
+    setMode('details')
+  }
+
+  function submitReport() {
+    reportUser(personId, reasonId, details.trim())
     setMode('reported')
   }
 
@@ -48,6 +55,8 @@ function FlagMenu({ personId, personName, isBlocked }) {
         onClick={() => {
           setOpen((v) => !v)
           setMode('menu')
+          setReasonId(null)
+          setDetails('')
         }}
         aria-label="Block or report"
         className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
@@ -99,12 +108,36 @@ function FlagMenu({ personId, personName, isBlocked }) {
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => handleReport(r.id)}
+                  onClick={() => chooseReason(r.id)}
                   className="rounded-xl px-3 py-2.5 text-left text-[13.5px] text-ink transition-colors duration-200 hover:bg-bg-sunken cursor-pointer"
                 >
                   {r.label}
                 </button>
               ))}
+            </div>
+          )}
+
+          {mode === 'details' && (
+            <div className="flex flex-col gap-2.5 p-1">
+              <p className="px-2 text-[12.5px] font-medium text-ink-muted">
+                Anything else we should know? (optional)
+              </p>
+              <textarea
+                autoFocus
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                rows={3}
+                placeholder="Add details…"
+                className="resize-none rounded-xl border border-border-strong bg-bg-sunken px-3 py-2 text-[13.5px] text-ink placeholder:text-ink-faint outline-none transition-colors duration-200 focus:border-accent focus:ring-2 focus:ring-accent/25"
+              />
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setMode('report')}>
+                  Back
+                </Button>
+                <Button size="sm" className="flex-1" onClick={submitReport}>
+                  Submit
+                </Button>
+              </div>
             </div>
           )}
 

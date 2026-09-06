@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
     reported <strong>${escapeHtml(target?.name ?? 'Unknown')}</strong>
     (@${escapeHtml(target?.username ?? '?')}, ${escapeHtml(target?.email ?? 'no email')}).</p>
     <p><strong>Reason:</strong> ${escapeHtml(report.reason ?? '')}</p>
+    ${report.details ? `<p><strong>Details:</strong> ${escapeHtml(report.details)}</p>` : ''}
     <p><strong>When:</strong> ${escapeHtml(report.created_at ?? '')}</p>
   `
 

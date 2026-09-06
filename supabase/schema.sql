@@ -175,6 +175,12 @@ create table if not exists reports (
   created_at timestamptz not null default now()
 );
 
+-- Free-text detail the reporter can optionally add alongside the reason
+-- category. `create table if not exists` above won't add this to a table
+-- that already existed from an earlier run — same situation as
+-- profiles.is_seed_data, so backfilled explicitly here.
+alter table reports add column if not exists details text;
+
 -- ============================================================================
 -- Notifications — "X liked your post", "X swiped right on you", "X sent you
 -- a message". Written by the app layer at the same time as the action that
