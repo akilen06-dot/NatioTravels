@@ -228,6 +228,45 @@ breaks.
 
 ---
 
+## Report alerts (email you when someone gets reported)
+
+Right now, reports land in the `reports` table with nothing else happening — you'd only see one
+by opening Table Editor yourself. This wires up an email to you the moment someone submits one.
+
+1. Go to [resend.com](https://resend.com) and create a free account — **sign up using
+   `natiotravel@gmail.com`** (or whichever inbox you want alerts sent to). This matters: Resend's
+   test sending address (`onboarding@resend.dev`, no setup required) can only deliver to the
+   email the account itself was created with. Sign up with a different email and these alerts
+   won't arrive until you verify your own domain with Resend instead.
+2. In the Resend dashboard, copy your **API key** (starts with `re_`).
+3. From the `haven-app` folder:
+   ```bash
+   supabase secrets set RESEND_API_KEY=re_... \
+     ADMIN_EMAIL=natiotravel@gmail.com \
+     REPORT_ALERT_SECRET=some-long-random-string-you-make-up
+   supabase functions deploy send-report-alert --no-verify-jwt
+   ```
+   `REPORT_ALERT_SECRET` can be anything — it's just a shared password so the function can tell a
+   real Database Webhook call apart from a random request. Make it long and don't reuse it
+   elsewhere.
+4. In the Supabase Dashboard, go to **Database → Webhooks → Create a new webhook**:
+   - **Table**: `reports`
+   - **Events**: `Insert` only
+   - **Type**: Supabase Edge Functions → pick `send-report-alert`
+   - Under **HTTP Headers**, add one: key `x-report-alert-secret`, value the exact same string you
+     used for `REPORT_ALERT_SECRET` above.
+   - Save.
+5. Test it: submit a report on a profile in the app (the flag icon → Report), then check the
+   `natiotravel@gmail.com` inbox — you should get an email within a few seconds naming the
+   reporter, the reported person, and the reason.
+
+If the email never arrives, check **Edge Functions → send-report-alert → Logs** in the dashboard
+first — it'll show whether the webhook even reached the function, and whether Resend's API
+rejected the send (most likely cause: signed up with a different email than `ADMIN_EMAIL`, so
+`onboarding@resend.dev` refused to deliver).
+
+---
+
 ## Rate limiting & abuse prevention
 
 Two layers, one you configure in a dashboard and one already built into `schema.sql`.
