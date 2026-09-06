@@ -26,20 +26,26 @@ const TRIP_PASS_MAX_DAYS = 14
 // the `Paddle-Signature` header as `ts=<unix ts>;h1=<hex digest>`. Verifying
 // against the exact raw bytes (not a re-serialized/parsed copy) is required
 // — see https://developer.paddle.com/webhooks/about/signature-verification.
-async function isValidSignature(rawBody: string, header: string | null): Promise<boolean> {
-  // Temporary diagnostics — safe to log: none of this is the secret itself,
-  // only lengths/digests, which are meaningless without it.
-  console.log('paddle-webhook debug: secret set?', !!webhookSecret, 'secret length:', webhookSecret?.length)
-  console.log('paddle-webhook debug: header received:', header)
-  console.log('paddle-webhook debug: body length:', rawBody.length)
+async function checkSignature(rawBody: string, header: string | null) {
+  // Temporary diagnostics, echoed in the response body (see below) rather
+  // than relying on the dashboard's log viewer — safe to leave briefly:
+  // reveals only the secret's length and computed hashes, never the secret
+  // itself.
+  const debug: Record<string, unknown> = {
+    secretSet: !!webhookSecret,
+    secretLength: webhookSecret?.length ?? 0,
+    headerReceived: header,
+    bodyLength: rawBody.length,
+  }
 
-  if (!header) return false
+  if (!header) return { valid: false, debug }
   const parts = Object.fromEntries(
     header.split(';').map((p) => p.trim().split('=').map((s) => s.trim()) as [string, string]),
   )
   const { ts, h1 } = parts
-  console.log('paddle-webhook debug: parsed ts:', ts, 'h1:', h1)
-  if (!ts || !h1) return false
+  debug.parsedTs = ts
+  debug.parsedH1 = h1
+  if (!ts || !h1) return { valid: false, debug }
 
   const key = await crypto.subtle.importKey(
     'raw',
@@ -52,20 +58,23 @@ async function isValidSignature(rawBody: string, header: string | null): Promise
   const computed = Array.from(new Uint8Array(signature))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
-  console.log('paddle-webhook debug: computed:', computed)
+  debug.computed = computed
 
-  if (computed.length !== h1.length) return false
+  if (computed.length !== h1.length) return { valid: false, debug }
   let diff = 0
   for (let i = 0; i < computed.length; i++) diff |= computed.charCodeAt(i) ^ h1.charCodeAt(i)
-  return diff === 0
+  return { valid: diff === 0, debug }
 }
 
 Deno.serve(async (req) => {
   const rawBody = await req.text()
-  const valid = await isValidSignature(rawBody, req.headers.get('paddle-signature'))
+  const { valid, debug } = await checkSignature(rawBody, req.headers.get('paddle-signature'))
   if (!valid) {
-    console.error('paddle-webhook: invalid signature')
-    return new Response('Invalid signature', { status: 400 })
+    console.error('paddle-webhook: invalid signature', debug)
+    return new Response(JSON.stringify({ error: 'Invalid signature', debug }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const event = JSON.parse(rawBody)
