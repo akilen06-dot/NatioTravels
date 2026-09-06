@@ -249,13 +249,19 @@ by opening Table Editor yourself. This wires up an email to you the moment someo
    `REPORT_ALERT_SECRET` can be anything — it's just a shared password so the function can tell a
    real Database Webhook call apart from a random request. Make it long and don't reuse it
    elsewhere.
-4. In the Supabase Dashboard, go to **Database → Webhooks → Create a new webhook**:
-   - **Table**: `reports`
-   - **Events**: `Insert` only
-   - **Type**: Supabase Edge Functions → pick `send-report-alert`
-   - Under **HTTP Headers**, add one: key `x-report-alert-secret`, value the exact same string you
-     used for `REPORT_ALERT_SECRET` above.
-   - Save.
+4. Wire up the trigger that actually calls the function on every new report. **Database →
+   Webhooks** has moved around across dashboard versions and can be hard to find, so this is done
+   as plain SQL instead — same result either way:
+   - Open [`supabase/report-alert-webhook.sql`](supabase/report-alert-webhook.sql).
+   - Replace `YOUR_REPORT_ALERT_SECRET` with the exact same string you used for
+     `REPORT_ALERT_SECRET` above.
+   - Paste the whole thing into the SQL Editor and run it. **Don't commit your edited copy with
+     the real secret in it** — only paste it into the SQL Editor, leave the file in git with the
+     placeholder.
+
+   (If you do manage to find **Database → Webhooks** in your dashboard, that works too — table
+   `reports`, event `Insert`, pointed at `send-report-alert`, with an `x-report-alert-secret`
+   header. The SQL above does the identical thing either way.)
 5. Test it: submit a report on a profile in the app (the flag icon → Report), then check the
    `natiotravel@gmail.com` inbox — you should get an email within a few seconds naming the
    reporter, the reported person, and the reason.
