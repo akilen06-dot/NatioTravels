@@ -441,3 +441,110 @@ begin
     alter publication supabase_realtime add table notifications;
   end if;
 end $$;
+
+-- ============================================================================
+-- Rate limiting — enforced here rather than in the app, so it can't be
+-- bypassed by calling the API directly instead of going through the UI.
+-- Thresholds are deliberately generous: no real person doing normal things
+-- should ever hit these, they're aimed at scripted spam/abuse. Sign-up rate
+-- limiting is separate — see Authentication -> Rate Limits in the dashboard.
+-- ============================================================================
+create or replace function limit_messages_rate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (
+    select count(*) from messages
+    where sender_id = new.sender_id and created_at > now() - interval '1 minute'
+  ) >= 30 then
+    raise exception 'Too many messages sent. Please wait a moment and try again.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists messages_rate_limit on messages;
+create trigger messages_rate_limit
+  before insert on messages
+  for each row execute function limit_messages_rate();
+
+create or replace function limit_swipes_rate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (
+    select count(*) from swipes
+    where swiper_id = new.swiper_id and created_at > now() - interval '1 minute'
+  ) >= 100 then
+    raise exception 'Too many swipes. Please wait a moment and try again.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists swipes_rate_limit on swipes;
+create trigger swipes_rate_limit
+  before insert on swipes
+  for each row execute function limit_swipes_rate();
+
+create or replace function limit_reports_rate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (
+    select count(*) from reports
+    where reporter_id = new.reporter_id and created_at > now() - interval '1 hour'
+  ) >= 10 then
+    raise exception 'Too many reports submitted. Please wait before submitting more.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists reports_rate_limit on reports;
+create trigger reports_rate_limit
+  before insert on reports
+  for each row execute function limit_reports_rate();
+
+create or replace function limit_post_comments_rate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (
+    select count(*) from post_comments
+    where author_id = new.author_id and created_at > now() - interval '1 minute'
+  ) >= 20 then
+    raise exception 'Too many comments. Please wait a moment and try again.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists post_comments_rate_limit on post_comments;
+create trigger post_comments_rate_limit
+  before insert on post_comments
+  for each row execute function limit_post_comments_rate();
+
+create or replace function limit_posts_rate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (
+    select count(*) from posts
+    where author_id = new.author_id and created_at > now() - interval '1 hour'
+  ) >= 10 then
+    raise exception 'Too many posts created. Please wait before posting again.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists posts_rate_limit on posts;
+create trigger posts_rate_limit
+  before insert on posts
+  for each row execute function limit_posts_rate();

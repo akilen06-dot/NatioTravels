@@ -18,6 +18,9 @@ npm run dev
   - **Database & accounts** — Supabase Postgres + Auth, replacing the mock in-memory store.
   - **Location** — real browser geolocation + reverse geocoding, real distances between users.
   - **Billing** — real Paddle checkout for Trip Pass / Frequent Traveler (sandbox mode).
+  - **Error monitoring** — real Sentry crash reporting for the frontend.
+- **Abuse prevention** — database-enforced rate limits on messages, swipes, reports, and post
+  comments (can't be bypassed by calling the API directly), always on regardless of the above.
 - Without those keys, everything falls back to local mock data persisted to `localStorage` (zustand `persist`), exactly like the original prototype.
 
 ## What's still simulated

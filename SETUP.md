@@ -203,6 +203,49 @@ API key/client-side token/webhook destination, and setting `PADDLE_ENVIRONMENT=p
 
 ---
 
+## Phase 5 — Error monitoring (Sentry)
+
+Without this, a crash in the app is invisible to you — you'd only find out from a user
+complaining. With it, you get an alert the moment something actually breaks in production.
+
+1. Go to [sentry.io](https://sentry.io), create a free account, and create a new project — pick
+   **React** as the platform.
+2. Copy the **DSN** it gives you (looks like `https://abc123@o000000.ingest.sentry.io/000000`).
+3. Add it to `.env.local`:
+   ```
+   VITE_SENTRY_DSN=https://...
+   ```
+4. Restart the dev server (or redeploy on Vercel — add the same variable there too).
+
+That's it — no Edge Function changes needed. This only tracks frontend crashes (a screen breaking,
+an unhandled error) — it doesn't add performance monitoring or session replay, to keep it
+lightweight. Errors inside the Paddle Edge Functions are already visible in Supabase's own
+**Edge Functions → Logs** tab (see the "Notifications, message attachments, group deletion"
+section above), so they aren't duplicated into Sentry too.
+
+Without a DSN set, the app behaves exactly as it does today — nothing to configure, nothing
+breaks.
+
+---
+
+## Rate limiting & abuse prevention
+
+Two layers, one you configure in a dashboard and one already built into `schema.sql`.
+
+**Sign-ups** — Supabase has its own configurable limit: **Authentication → Rate Limits** in your
+dashboard, under "Rate limit for sign-ups and sign-ins". Worth setting a sane cap per hour once
+you have real users. (Note: Supabase's own docs and community have flagged this setting as not
+always perfectly enforced — treat it as one layer, not a guarantee.)
+
+**Messages, swipes, reports, and post comments** — enforced directly in the database via triggers
+in `schema.sql` (re-run it if you haven't since this was added). Each one raises a friendly error
+if the same person tries to insert too many rows too quickly — generous enough that no real
+person doing normal things should ever hit them, but enough to stop a script from blasting
+hundreds of messages/swipes/reports a minute. Because it's enforced in Postgres itself, it can't
+be bypassed by calling the API directly instead of going through the app.
+
+---
+
 ## What's still simulated, even with everything above configured
 
 - **ID document authenticity** — the app captures a passport/ID photo (see the section above) but
