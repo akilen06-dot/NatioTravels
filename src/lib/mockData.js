@@ -164,17 +164,6 @@ export const initialGroups = [
   },
 ]
 
-export const presetPostPhotos = [
-  'https://picsum.photos/seed/natio-preset-1/700/700',
-  'https://picsum.photos/seed/natio-preset-2/700/700',
-  'https://picsum.photos/seed/natio-preset-3/700/700',
-  'https://picsum.photos/seed/natio-preset-4/700/700',
-  'https://picsum.photos/seed/natio-preset-5/700/700',
-  'https://picsum.photos/seed/natio-preset-6/700/700',
-  'https://picsum.photos/seed/natio-preset-7/700/700',
-  'https://picsum.photos/seed/natio-preset-8/700/700',
-]
-
 export const initialPosts = [
   {
     id: 'post-1',

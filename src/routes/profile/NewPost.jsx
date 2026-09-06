@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ImageSquare, UploadSimple } from '@phosphor-icons/react'
+import { ArrowLeft, ImageSquare, UploadSimple } from '@phosphor-icons/react'
 import { useStore } from '../../lib/store'
-import { presetPostPhotos } from '../../lib/mockData'
 import { readAndResizeImage } from '../../lib/imageFile'
 
 export default function NewPost() {
@@ -91,31 +90,7 @@ export default function NewPost() {
         {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
       </div>
 
-      <p className="mt-8 text-[13px] font-medium text-ink-muted">Or pick a preset</p>
-      <div className="mt-2 grid grid-cols-4 gap-2">
-        {presetPostPhotos.map((src) => (
-          <button
-            key={src}
-            type="button"
-            onClick={() => {
-              setPhoto(src)
-              setError('')
-            }}
-            className={`relative aspect-square overflow-hidden rounded-xl border-2 cursor-pointer ${
-              photo === src ? 'border-accent-strong' : 'border-transparent'
-            }`}
-          >
-            <img src={src} alt="" className="h-full w-full object-cover" />
-            {photo === src && (
-              <span className="absolute inset-0 flex items-center justify-center bg-black/35">
-                <Check size={22} weight="bold" className="text-white" />
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <p className="mt-6 text-[13.5px] font-medium text-ink">Caption</p>
+      <p className="mt-8 text-[13.5px] font-medium text-ink">Caption</p>
       <textarea
         value={caption}
         onChange={(e) => setCaption(e.target.value)}
