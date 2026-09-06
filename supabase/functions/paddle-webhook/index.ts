@@ -27,11 +27,18 @@ const TRIP_PASS_MAX_DAYS = 14
 // against the exact raw bytes (not a re-serialized/parsed copy) is required
 // — see https://developer.paddle.com/webhooks/about/signature-verification.
 async function isValidSignature(rawBody: string, header: string | null): Promise<boolean> {
+  // Temporary diagnostics — safe to log: none of this is the secret itself,
+  // only lengths/digests, which are meaningless without it.
+  console.log('paddle-webhook debug: secret set?', !!webhookSecret, 'secret length:', webhookSecret?.length)
+  console.log('paddle-webhook debug: header received:', header)
+  console.log('paddle-webhook debug: body length:', rawBody.length)
+
   if (!header) return false
   const parts = Object.fromEntries(
     header.split(';').map((p) => p.trim().split('=').map((s) => s.trim()) as [string, string]),
   )
   const { ts, h1 } = parts
+  console.log('paddle-webhook debug: parsed ts:', ts, 'h1:', h1)
   if (!ts || !h1) return false
 
   const key = await crypto.subtle.importKey(
@@ -45,6 +52,7 @@ async function isValidSignature(rawBody: string, header: string | null): Promise
   const computed = Array.from(new Uint8Array(signature))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
+  console.log('paddle-webhook debug: computed:', computed)
 
   if (computed.length !== h1.length) return false
   let diff = 0
