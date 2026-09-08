@@ -91,6 +91,11 @@ export const useStore = create(
       reports: [],
       notifications: [],
       toasts: [],
+      // Mock-mode-only logs of recent swipe/join timestamps, used to enforce
+      // the free-promo weekly caps locally (backend mode queries real
+      // created_at/requested_at timestamps from Supabase instead).
+      weeklySwipeLog: [],
+      weeklyJoinLog: [],
 
       beginSignUp: (fields) =>
         set({
@@ -101,6 +106,30 @@ export const useStore = create(
 
       setDraftField: (key, value) =>
         set((s) => ({ draft: { ...s.draft, [key]: value } })),
+
+      // Proactive checks so a screen can show a locked notice up front
+      // instead of letting someone start swiping/requesting and only then
+      // finding out they're capped. `false` for anyone not currently
+      // promo-limited (paying, or the promo isn't on).
+      checkSwipeLimitReached: async () => {
+        const s = get()
+        if (!isPromoLimited(s.currentUser)) return false
+        if (isBackendConfigured) {
+          const count = await matchesApi.countSwipesThisWeek(s.currentUser.id)
+          return count >= PROMO_WEEKLY_SWIPE_LIMIT
+        }
+        return countThisWeek(s.weeklySwipeLog) >= PROMO_WEEKLY_SWIPE_LIMIT
+      },
+
+      checkGroupJoinLimitReached: async () => {
+        const s = get()
+        if (!isPromoLimited(s.currentUser)) return false
+        if (isBackendConfigured) {
+          const count = await groupsApi.countJoinRequestsThisWeek(s.currentUser.id)
+          return count >= PROMO_WEEKLY_GROUP_JOIN_LIMIT
+        }
+        return countThisWeek(s.weeklyJoinLog) >= PROMO_WEEKLY_GROUP_JOIN_LIMIT
+      },
 
       // Loads everything the signed-in user needs (other profiles, matches,
       // groups, threads, posts, blocks/reports) from Supabase in one go.
@@ -543,6 +572,10 @@ export const useStore = create(
       swipe: async (travelerId, liked) => {
         if (isBackendConfigured) {
           const userId = get().currentUser.id
+          if (isPromoLimited(get().currentUser)) {
+            const count = await matchesApi.countSwipesThisWeek(userId)
+            if (count >= PROMO_WEEKLY_SWIPE_LIMIT) return { matched: false, limitReached: true }
+          }
           const { matched } = await matchesApi.swipe(userId, travelerId, liked)
           if (liked) {
             set((s) => ({
@@ -574,6 +607,10 @@ export const useStore = create(
           return { matched: liked && matched }
         }
         const s = get()
+        if (isPromoLimited(s.currentUser) && countThisWeek(s.weeklySwipeLog) >= PROMO_WEEKLY_SWIPE_LIMIT) {
+          return { matched: false, limitReached: true }
+        }
+        set({ weeklySwipeLog: [...s.weeklySwipeLog, new Date().toISOString()] })
         if (liked) {
           set({
             likedIds: [...s.likedIds, travelerId],
@@ -658,19 +695,29 @@ export const useStore = create(
 
       requestToJoin: async (groupId) => {
         if (isBackendConfigured) {
-          await groupsApi.requestToJoin(groupId, get().currentUser.id)
+          const currentUser = get().currentUser
+          if (isPromoLimited(currentUser)) {
+            const count = await groupsApi.countJoinRequestsThisWeek(currentUser.id)
+            if (count >= PROMO_WEEKLY_GROUP_JOIN_LIMIT) return { limitReached: true }
+          }
+          await groupsApi.requestToJoin(groupId, currentUser.id)
           set({ groups: await groupsApi.listGroups() })
-          return
+          return {}
         }
         const s = get()
         const uid = s.currentUser.id
+        if (isPromoLimited(s.currentUser) && countThisWeek(s.weeklyJoinLog) >= PROMO_WEEKLY_GROUP_JOIN_LIMIT) {
+          return { limitReached: true }
+        }
         set({
+          weeklyJoinLog: [...s.weeklyJoinLog, new Date().toISOString()],
           groups: s.groups.map((g) =>
             g.id === groupId && !g.members.includes(uid) && !g.pendingRequests.includes(uid)
               ? { ...g, pendingRequests: [...g.pendingRequests, uid] }
               : g,
           ),
         })
+        return {}
       },
 
       acceptRequest: async (groupId, userId) => {
@@ -944,10 +991,42 @@ export function isTripLocked(user) {
   return expiry.getTime() < Date.now()
 }
 
+// Launch promo: everyone gets full access for free, no plan required,
+// regardless of billing — capped by the weekly limits below instead. Change
+// the date to whenever the promo should end (or delete this block) to go
+// back to requiring a real plan — nothing else in the app needs to change
+// either way.
+const FREE_PROMO_UNTIL = new Date('2026-12-30T00:00:00Z')
+
+export function isPromoActive() {
+  return Date.now() < FREE_PROMO_UNTIL.getTime()
+}
+
+// True for anyone the weekly promo limits should apply to: signed in,
+// during the promo, and without a real paid plan (a paying customer during
+// the promo still gets unlimited use — they chose to pay).
+export function isPromoLimited(user) {
+  return !!user && isPromoActive() && !user.plan
+}
+
+// Weekly caps during the free promo — everyone gets in, but usage is capped
+// instead of gated behind billing. Rolling 7-day windows, not calendar weeks.
+export const PROMO_WEEKLY_SWIPE_LIMIT = 10
+export const PROMO_WEEKLY_GROUP_JOIN_LIMIT = 2
+
+function countThisWeek(log) {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  return (log || []).filter((t) => new Date(t).getTime() > weekAgo).length
+}
+
 // Full access (Discover, Groups, unlimited Search) requires a paid plan that
 // hasn't expired. Users who skipped payment (plan is null) get a limited,
-// free tier instead of being treated as "unlocked."
+// free tier instead of being treated as "unlocked." During the launch
+// promo, everyone gets access regardless — see isPromoLimited() for the
+// separate weekly caps that apply instead of billing during that window.
 export function hasAccess(user) {
-  if (!user?.plan) return false
+  if (!user) return false
+  if (isPromoActive()) return true
+  if (!user.plan) return false
   return !isTripLocked(user)
 }

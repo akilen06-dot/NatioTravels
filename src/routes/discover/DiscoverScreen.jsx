@@ -4,7 +4,7 @@ import { ArrowClockwise, ArrowCounterClockwise } from '@phosphor-icons/react'
 import SwipeCard, { SwipeButton } from './SwipeCard'
 import MatchModal from './MatchModal'
 import TripLockedNotice from '../../components/TripLockedNotice'
-import { useStore, hasAccess } from '../../lib/store'
+import { useStore, hasAccess, isPromoLimited, PROMO_WEEKLY_SWIPE_LIMIT } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
 import { distanceKm } from '../../lib/api/matches'
 
@@ -26,12 +26,26 @@ export default function DiscoverScreen() {
   const undoLastSwipe = useStore((s) => s.undoLastSwipe)
   const refreshDiscover = useStore((s) => s.refreshDiscover)
   const refreshCurrentUser = useStore((s) => s.refreshCurrentUser)
+  const checkSwipeLimitReached = useStore((s) => s.checkSwipeLimitReached)
   const [matched, setMatched] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [swipeLimitReached, setSwipeLimitReached] = useState(false)
   const [confirmingPayment, setConfirmingPayment] = useState(
     isBackendConfigured && searchParams.get('checkout') === 'success',
   )
   const triggerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isPromoLimited(currentUser)) return
+    let cancelled = false
+    checkSwipeLimitReached().then((reached) => {
+      if (!cancelled) setSwipeLimitReached(reached)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id])
 
   // Coming back from a real Paddle Checkout: the local currentUser is
   // whatever it was before payment, so re-pull it from the server (which
@@ -91,9 +105,23 @@ export default function DiscoverScreen() {
     )
   }
 
+  if (swipeLimitReached) {
+    return (
+      <TripLockedNotice
+        title="You're out of swipes for this week"
+        body={`Free access is capped at ${PROMO_WEEKLY_SWIPE_LIMIT} swipes a week. It resets on a rolling basis, or add a plan for unlimited swiping.`}
+        ctaLabel="Add a plan to unlock"
+      />
+    )
+  }
+
   async function handleSwiped(direction) {
     const traveler = deck[0]
     const result = await swipe(traveler.id, direction === 'like')
+    if (result?.limitReached) {
+      setSwipeLimitReached(true)
+      return
+    }
     if (direction === 'like' && result?.matched) setMatched(traveler)
   }
 

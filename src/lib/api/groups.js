@@ -53,6 +53,20 @@ export async function requestToJoin(groupId, userId) {
   if (error) throw error
 }
 
+// Used for the launch-promo weekly group-join cap — a rolling 7-day count of
+// join requests *sent*, not of requests that got accepted (that part is up
+// to the group owner, not something the requester controls the timing of).
+export async function countJoinRequestsThisWeek(userId) {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { count, error } = await supabase
+    .from('group_join_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('requested_at', weekAgo)
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function acceptRequest(groupId, userId) {
   const { error: insertErr } = await supabase.from('group_members').insert({ group_id: groupId, user_id: userId })
   if (insertErr) throw insertErr

@@ -20,6 +20,19 @@ export function distanceKm(a, b) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)))
 }
 
+// Used for the launch-promo weekly swipe cap — a rolling 7-day count, not
+// tied to a calendar week.
+export async function countSwipesThisWeek(userId) {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { count, error } = await supabase
+    .from('swipes')
+    .select('*', { count: 'exact', head: true })
+    .eq('swiper_id', userId)
+    .gte('created_at', weekAgo)
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function listSwipedIds(userId) {
   const { data, error } = await supabase.from('swipes').select('target_id, liked').eq('swiper_id', userId)
   if (error) throw error

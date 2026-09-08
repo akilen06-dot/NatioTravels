@@ -5,7 +5,7 @@ import Button from '../../components/Button'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import RatingPrompt from '../../components/RatingPrompt'
 import Avatar from '../../components/Avatar'
-import { useStore, hasAccess, findPersonById } from '../../lib/store'
+import { useStore, hasAccess, findPersonById, PROMO_WEEKLY_GROUP_JOIN_LIMIT } from '../../lib/store'
 
 function Person({ id }) {
   const person = useStore((s) => findPersonById(s, id))
@@ -40,6 +40,12 @@ export default function GroupDetail() {
   const [confirmKick, setConfirmKick] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [joinLimitReached, setJoinLimitReached] = useState(false)
+
+  async function handleRequestToJoin() {
+    const result = await requestToJoin(group.id)
+    if (result?.limitReached) setJoinLimitReached(true)
+  }
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -135,9 +141,17 @@ export default function GroupDetail() {
       )}
 
       {!isMember && !isOwner && (
-        <Button className="mt-6" onClick={() => requestToJoin(group.id)} disabled={hasRequested}>
-          {hasRequested ? 'Request sent' : 'Request to join'}
-        </Button>
+        <div className="mt-6">
+          <Button onClick={handleRequestToJoin} disabled={hasRequested || joinLimitReached}>
+            {hasRequested ? 'Request sent' : 'Request to join'}
+          </Button>
+          {joinLimitReached && (
+            <p className="mt-2 text-[12.5px] text-danger">
+              Free access is capped at {PROMO_WEEKLY_GROUP_JOIN_LIMIT} group join requests a week.
+              Add a plan for unlimited groups.
+            </p>
+          )}
+        </div>
       )}
 
       {isMember && !isOwner && (
