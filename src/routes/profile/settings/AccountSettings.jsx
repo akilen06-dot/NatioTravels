@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check } from '@phosphor-icons/react'
+import { ArrowLeft, Check, CheckCircle } from '@phosphor-icons/react'
 import Field from '../../../components/Field'
 import { fieldClasses } from '../../../lib/fieldClasses'
 import Button from '../../../components/Button'
 import Switch from '../../../components/Switch'
 import { useStore, DEFAULT_AD_PREFERENCES } from '../../../lib/store'
+import { isBackendConfigured } from '../../../lib/supabaseClient'
 
 const PLAN_LABEL = { trip: 'Trip Pass', subscription: 'Frequent Traveler' }
 
@@ -58,6 +59,32 @@ export default function AccountSettings() {
       <h1 className="mt-4 text-xl font-semibold text-ink">Account</h1>
 
       <section className="mt-6 rounded-2xl border border-border bg-bg-raised p-5">
+        <h2 className="text-[14.5px] font-medium text-ink">Account details</h2>
+        <dl className="mt-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-[13px] text-ink-muted">Name</dt>
+            <dd className="truncate text-[13.5px] font-medium text-ink">{currentUser.name}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-[13px] text-ink-muted">Username</dt>
+            <dd className="truncate text-[13.5px] font-medium text-ink">@{currentUser.username}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-[13px] text-ink-muted">Email</dt>
+            <dd className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-medium text-ink">
+              <span className="truncate">{currentUser.email}</span>
+              {isBackendConfigured &&
+                (currentUser.emailVerified ? (
+                  <CheckCircle size={14} weight="fill" className="shrink-0 text-success" />
+                ) : (
+                  <span className="shrink-0 text-[11px] font-normal text-ink-faint">(unverified)</span>
+                ))}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-border bg-bg-raised p-5">
         <h2 className="text-[14.5px] font-medium text-ink">Change password</h2>
         <form onSubmit={handlePasswordSubmit} className="mt-4 flex flex-col gap-4">
           <Field label="Current password" htmlFor="current-password" error={errors.currentPassword}>
