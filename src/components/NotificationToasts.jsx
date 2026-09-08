@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Bell, ChatCircle, Heart, PersonSimpleRun } from '@phosphor-icons/react'
 import { useStore, findPersonById } from '../lib/store'
+import Avatar from './Avatar'
 
 const ICON = { post_like: Heart, swipe_like: PersonSimpleRun, message: ChatCircle }
 
@@ -39,7 +40,7 @@ function Toast({ notif }) {
       className="pointer-events-auto flex w-80 items-center gap-3 rounded-2xl border border-border bg-bg-raised p-3.5 text-left shadow-[0_18px_50px_-12px_rgba(0,0,0,0.35)] cursor-pointer"
     >
       <div className="relative shrink-0">
-        <img src={actor?.photo} alt="" className="h-10 w-10 rounded-full object-cover bg-bg-sunken" />
+        <Avatar src={actor?.photo} className="h-10 w-10 rounded-full object-cover bg-bg-sunken" />
         <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-strong text-white ring-2 ring-bg-raised">
           <Icon size={11} weight="fill" />
         </span>

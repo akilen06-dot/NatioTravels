@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, File, Paperclip, PaperPlaneTilt, ProhibitInset, X } from '@phosphor-icons/react'
 import { fieldClasses } from '../../lib/fieldClasses'
 import Button from '../../components/Button'
+import Avatar from '../../components/Avatar'
 import { useStore } from '../../lib/store'
 import { readAndResizeImage, readFileAsDataUrl } from '../../lib/imageFile'
 
@@ -108,7 +109,7 @@ export default function ChatThread() {
         >
           <ArrowLeft size={18} />
         </button>
-        <img src={thread.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
+        <Avatar src={thread.photo} className="h-9 w-9 rounded-full object-cover" />
         <p className="text-[14.5px] font-medium text-ink">{thread.name}</p>
       </div>
 

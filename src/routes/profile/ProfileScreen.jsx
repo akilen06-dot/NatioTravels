@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { GearSix, ShieldCheck } from '@phosphor-icons/react'
 import Button from '../../components/Button'
 import PostGrid from '../../components/PostGrid'
+import Avatar from '../../components/Avatar'
 import { useStore, isTripLocked, isTripCapped, tripPassExpiry } from '../../lib/store'
 
 function daysLeft(expiry) {
@@ -29,7 +30,7 @@ export default function ProfileScreen() {
     <div className="mx-auto max-w-lg px-5 py-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-5">
-          <img src={currentUser.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
+          <Avatar src={currentUser.photo} className="h-20 w-20 rounded-full object-cover" />
           <div className="flex gap-6">
             <div className="text-center">
               <p className="font-mono text-[17px] font-medium text-ink">{posts.length}</p>

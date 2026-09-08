@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import Button from '../../components/Button'
+import Avatar from '../../components/Avatar'
 import { useStore } from '../../lib/store'
 
 export default function MatchModal({ traveler, onClose }) {
@@ -30,14 +31,12 @@ export default function MatchModal({ traveler, onClose }) {
               It's a match
             </p>
             <div className="mt-4 flex items-center justify-center">
-              <img
+              <Avatar
                 src={currentUser?.photo}
-                alt=""
                 className="h-20 w-20 -mr-4 rounded-full border-4 border-bg-raised object-cover"
               />
-              <img
+              <Avatar
                 src={traveler.photo}
-                alt=""
                 className="h-20 w-20 rounded-full border-4 border-bg-raised object-cover"
               />
             </div>

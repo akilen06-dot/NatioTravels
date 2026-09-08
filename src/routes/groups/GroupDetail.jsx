@@ -4,6 +4,7 @@ import { CalendarBlank, Check, MapPinLine, ProhibitInset, Star, Trash, UserMinus
 import Button from '../../components/Button'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import RatingPrompt from '../../components/RatingPrompt'
+import Avatar from '../../components/Avatar'
 import { useStore, hasAccess, findPersonById } from '../../lib/store'
 
 function Person({ id }) {
@@ -12,7 +13,7 @@ function Person({ id }) {
   if (!person) return null
   return (
     <div className="flex items-center gap-3">
-      <img src={person.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
+      <Avatar src={person.photo} className="h-10 w-10 rounded-full object-cover" />
       <div>
         <p className="text-[14px] font-medium text-ink">
           {person.name}

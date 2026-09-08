@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Archive, ArrowUUpLeft, Heart, Trash } from '@phosphor-icons/react'
 import { fieldClasses } from '../../lib/fieldClasses'
 import { useStore, findPersonById } from '../../lib/store'
+import Avatar from '../../components/Avatar'
 
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -18,7 +19,7 @@ function CommentRow({ comment }) {
   const author = useStore((s) => findPersonById(s, comment.authorId))
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <img src={author?.photo} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+      <Avatar src={author?.photo} className="h-8 w-8 shrink-0 rounded-full object-cover" />
       <div className="min-w-0">
         <p className="text-[13.5px] leading-relaxed text-ink">
           <span className="font-medium">{author?.name ?? 'Someone'}</span>{' '}
@@ -74,7 +75,7 @@ export default function PostDetail() {
           <ArrowLeft size={18} />
         </button>
         <div className="flex items-center gap-2.5">
-          <img src={author?.photo} alt="" className="h-7 w-7 rounded-full object-cover" />
+          <Avatar src={author?.photo} className="h-7 w-7 rounded-full object-cover" />
           <p className="text-[14px] font-medium text-ink">{author?.name}</p>
         </div>
         {isOwn ? (

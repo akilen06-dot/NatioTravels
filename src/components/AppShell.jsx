@@ -11,6 +11,7 @@ import {
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
 import NotificationToasts from './NotificationToasts'
+import Avatar from './Avatar'
 import { useStore } from '../lib/store'
 import { useT } from '../lib/i18n'
 
@@ -79,7 +80,7 @@ export default function AppShell() {
             onClick={() => navigate('/profile')}
             className="flex items-center gap-2.5 rounded-xl p-2 text-left transition-colors duration-200 hover:bg-bg-sunken cursor-pointer"
           >
-            <img src={currentUser?.photo} alt="" className="h-8 w-8 rounded-full object-cover" />
+            <Avatar src={currentUser?.photo} className="h-8 w-8 rounded-full object-cover" />
             <span className="min-w-0">
               <span className="block truncate text-[13.5px] font-medium text-ink">
                 {currentUser?.name}

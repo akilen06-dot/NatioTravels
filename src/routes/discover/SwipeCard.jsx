@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { MapPinLine, ShieldCheck, X, Heart } from '@phosphor-icons/react'
+import Avatar from '../../components/Avatar'
 
 const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, ref) {
   const reduce = useReducedMotion()
@@ -37,7 +38,7 @@ const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, 
       }}
       className={`absolute inset-0 overflow-hidden rounded-3xl border border-border bg-bg-raised shadow-[0_18px_50px_-12px_rgba(0,0,0,0.28)] ${active ? 'cursor-grab active:cursor-grabbing' : 'pointer-events-none'}`}
     >
-      <img src={traveler.photo} alt="" className="h-full w-full object-cover" draggable={false} />
+      <Avatar src={traveler.photo} className="h-full w-full object-cover" draggable={false} />
 
       <motion.div
         style={{ opacity: likeOpacity }}

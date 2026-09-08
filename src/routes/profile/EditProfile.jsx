@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera } from '@phosphor-icons/react'
 import Button from '../../components/Button'
+import Avatar from '../../components/Avatar'
 import { useStore } from '../../lib/store'
 import { readAndResizeImage } from '../../lib/imageFile'
 
@@ -61,7 +62,7 @@ export default function EditProfile() {
 
       <div className="mt-6 flex flex-col items-center">
         <div className="relative">
-          <img src={photo} alt="" className="h-24 w-24 rounded-full object-cover" />
+          <Avatar src={photo} className="h-24 w-24 rounded-full object-cover" />
           {loadingUpload && (
             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

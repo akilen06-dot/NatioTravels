@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Flag, ShieldSlash, UserCircleMinus } from '@phosphor-icons/react'
 import Button from '../../../components/Button'
+import Avatar from '../../../components/Avatar'
 import { useStore, findPersonById } from '../../../lib/store'
 
 const REASON_LABEL = {
@@ -17,7 +18,7 @@ function BlockedRow({ id }) {
   if (!person) return null
   return (
     <div className="flex items-center gap-3 py-3.5">
-      <img src={person.photo} alt="" className="h-11 w-11 rounded-full object-cover" />
+      <Avatar src={person.photo} className="h-11 w-11 rounded-full object-cover" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-medium text-ink">{person.name}</p>
         <p className="truncate text-[13px] text-ink-muted">{person.country}</p>
@@ -34,7 +35,7 @@ function ReportedRow({ report }) {
   if (!person) return null
   return (
     <div className="flex items-center gap-3 py-3.5">
-      <img src={person.photo} alt="" className="h-11 w-11 rounded-full object-cover" />
+      <Avatar src={person.photo} className="h-11 w-11 rounded-full object-cover" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px] font-medium text-ink">{person.name}</p>
         <p className="truncate text-[13px] text-ink-muted">

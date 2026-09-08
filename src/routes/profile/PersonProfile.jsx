@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react'
 import Button from '../../components/Button'
 import PostGrid from '../../components/PostGrid'
+import Avatar from '../../components/Avatar'
 import { useStore, findPersonById } from '../../lib/store'
 
 const REPORT_REASONS = [
@@ -202,7 +203,7 @@ export default function PersonProfile() {
       </div>
 
       <div className="mt-4 flex items-center gap-5">
-        <img src={person.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
+        <Avatar src={person.photo} className="h-20 w-20 rounded-full object-cover" />
         {!isPrivateToViewer && !isBlocked && (
           <div className="text-center">
             <p className="font-mono text-[17px] font-medium text-ink">{posts.length}</p>

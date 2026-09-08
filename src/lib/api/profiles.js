@@ -92,7 +92,7 @@ export async function signUp(draft) {
       city: draft.city || 'Lisbon',
       lat: draft.lat ?? null,
       lng: draft.lng ?? null,
-      photo_url: draft.photo || `https://i.pravatar.cc/480?u=${encodeURIComponent(draft.email)}`,
+      photo_url: draft.photo || null,
       bio: 'New here, say hi!',
       plan: draft.plan ?? null,
       billing: draft.plan === 'subscription' ? draft.billing : null,

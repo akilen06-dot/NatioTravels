@@ -4,6 +4,7 @@ import { Lock, MagnifyingGlass, ShieldCheck, UsersFour } from '@phosphor-icons/r
 import { fieldClasses } from '../../lib/fieldClasses'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import Button from '../../components/Button'
+import Avatar from '../../components/Avatar'
 import { useStore, hasAccess, isTripLocked } from '../../lib/store'
 
 const FREE_SEARCH_LIMIT = 5
@@ -75,7 +76,7 @@ export default function SearchScreen() {
               onClick={() => navigate(`/people/${p.id}`)}
               className="flex items-center gap-3.5 py-3 text-left transition-colors duration-200 hover:bg-bg-sunken -mx-2 px-2 rounded-xl cursor-pointer"
             >
-              <img src={p.photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+              <Avatar src={p.photo} className="h-12 w-12 rounded-full object-cover" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-[14.5px] font-medium text-ink">{p.name}</p>

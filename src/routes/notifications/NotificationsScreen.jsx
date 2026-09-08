@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, ChatCircle, Heart, PersonSimpleRun } from '@phosphor-icons/react'
 import { useStore, findPersonById } from '../../lib/store'
+import Avatar from '../../components/Avatar'
 
 function timeAgo(iso) {
   if (!iso) return ''
@@ -40,9 +41,8 @@ function NotificationRow({ notif }) {
       }`}
     >
       <div className="relative shrink-0">
-        <img
+        <Avatar
           src={actor?.photo}
-          alt=""
           className="h-11 w-11 rounded-full object-cover bg-bg-sunken"
         />
         <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-strong text-white ring-2 ring-bg">

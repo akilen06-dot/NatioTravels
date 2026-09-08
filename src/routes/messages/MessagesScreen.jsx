@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChatCircleDots } from '@phosphor-icons/react'
 import { useStore } from '../../lib/store'
+import Avatar from '../../components/Avatar'
 
 function timeAgo(iso) {
   if (!iso) return ''
@@ -57,7 +58,7 @@ export default function MessagesScreen() {
                 to={`/messages/${t.id}`}
                 className="flex items-center gap-3.5 py-3.5 transition-colors duration-200 hover:bg-bg-sunken -mx-2 px-2 rounded-xl"
               >
-                <img src={t.photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+                <Avatar src={t.photo} className="h-12 w-12 rounded-full object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[14.5px] font-medium text-ink">{t.name}</p>
                   <p className="truncate text-[13px] text-ink-muted">
