@@ -301,6 +301,7 @@ export const useStore = create(
             verifiedTravelers: s.verifiedTravelers + 1,
           }))
           await get().hydrate()
+          get().sendVerificationEmail()
           return
         }
         const draft = { ...get().draft, plan, billing }
@@ -343,6 +344,7 @@ export const useStore = create(
           const profile = await profilesApi.signUp(draft)
           set({ currentUser: profile, auth: 'active', draft: { ...initialDraft } })
           await get().hydrate()
+          get().sendVerificationEmail()
           return
         }
         const draft = get().draft
@@ -450,6 +452,29 @@ export const useStore = create(
         } catch (err) {
           return { ok: false, error: err.message || 'Could not reset your password. Try again.' }
         }
+      },
+
+      // Soft verification — never awaited by its callers and never throws:
+      // failing to send this email shouldn't block signup completing or
+      // surface as an error the user has to deal with.
+      sendVerificationEmail: async () => {
+        if (!isBackendConfigured) return
+        try {
+          await profilesApi.sendVerificationEmail()
+        } catch (err) {
+          console.error('Failed to send verification email:', err)
+        }
+      },
+
+      // Called from /verify-email. Also refreshes currentUser in case this
+      // browser happens to be signed in as the account that just verified.
+      verifyEmail: async (token) => {
+        if (!isBackendConfigured) return false
+        const ok = await profilesApi.verifyEmailToken(token)
+        if (ok && get().currentUser) {
+          set((s) => ({ currentUser: { ...s.currentUser, emailVerified: true } }))
+        }
+        return ok
       },
 
       updateProfile: async ({ photo, bio }) => {
@@ -810,6 +835,19 @@ export const useStore = create(
         }
         set((s) => ({ groups: s.groups.filter((g) => g.id !== groupId) }))
       },
+
+      // Appends a message that arrived via the realtime subscription (see
+      // ChatThread) rather than one this device sent itself. Deduped by id
+      // in case it somehow arrives twice.
+      receiveMessage: (threadId, message) =>
+        set((s) => {
+          const thread = s.threads[threadId]
+          if (!thread) return s
+          if (thread.messages.some((m) => m.id === message.id)) return s
+          return {
+            threads: { ...s.threads, [threadId]: { ...thread, messages: [...thread.messages, message] } },
+          }
+        }),
 
       // `attachment` is { url, type: 'image' | 'file', name } or undefined.
       sendMessage: async (threadId, text, attachment) => {

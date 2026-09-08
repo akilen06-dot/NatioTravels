@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeSlash } from '@phosphor-icons/react'
 import OnboardingLayout from '../../components/OnboardingLayout'
 import Field from '../../components/Field'
@@ -25,6 +25,7 @@ export default function SignUp() {
   const [dialCode, setDialCode] = useState('+1')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [country, setCountry] = useState('')
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [errors, setErrors] = useState({})
 
   async function handleSubmit(e) {
@@ -44,6 +45,7 @@ export default function SignUp() {
     if (password.length < 8) next.password = 'Password must be at least 8 characters.'
     if (phoneNumber.replace(/\D/g, '').length < 6) next.phone = 'Enter a valid phone number.'
     if (!country) next.country = 'Select your country of origin.'
+    if (!agreedToTerms) next.terms = 'You need to agree to the Terms and Privacy Policy to continue.'
     setErrors(next)
     if (Object.keys(next).length) return
     beginSignUp({
@@ -159,6 +161,30 @@ export default function SignUp() {
             ))}
           </select>
         </Field>
+
+        <div>
+          <label className="flex items-start gap-2.5 text-[13px] leading-relaxed text-ink-muted">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent-strong"
+            />
+            <span>
+              I agree to Natio's{' '}
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-accent-strong underline underline-offset-2"
+              >
+                Terms &amp; Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+          {errors.terms && <p className="mt-1.5 text-[12.5px] text-danger">{errors.terms}</p>}
+        </div>
 
         <Button type="submit" size="lg" className="mt-2 w-full">
           Continue

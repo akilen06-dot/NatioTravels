@@ -49,6 +49,13 @@ alter table profiles add column if not exists is_seed_data boolean not null defa
 alter table profiles add column if not exists paddle_customer_id text;
 alter table profiles add column if not exists paddle_subscription_id text;
 
+-- Soft email verification: doesn't block signing in or using the app (the
+-- onboarding flow depends on getting an active session immediately at
+-- signup) - just tracks whether the address has actually been confirmed
+-- reachable, shown as a dismissible-but-persistent banner in the app.
+alter table profiles add column if not exists email_verified boolean not null default false;
+alter table profiles add column if not exists email_verify_token uuid;
+
 -- ============================================================================
 -- Swiping / matching
 -- ============================================================================
@@ -230,6 +237,30 @@ as $$
 $$;
 
 grant execute on function email_for_username(text) to anon, authenticated;
+
+-- Confirms a soft-verification email link. Runs as SECURITY DEFINER (not
+-- RLS-scoped to the caller) since clicking the link often happens signed
+-- out or on a different device than the one that's actually signed in —
+-- the token itself, not a session, is what proves the click is genuine.
+-- Single-use: matching clears the token so it can't be replayed.
+create or replace function verify_email_token(token uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  matched_id uuid;
+begin
+  update profiles
+  set email_verified = true, email_verify_token = null
+  where email_verify_token = token
+  returning id into matched_id;
+  return matched_id is not null;
+end;
+$$;
+
+grant execute on function verify_email_token(uuid) to anon, authenticated;
 
 -- ============================================================================
 -- Row Level Security
@@ -436,8 +467,10 @@ create policy "users can delete their own notifications" on notifications
   for delete using (auth.uid() = user_id);
 
 -- Realtime: lets the app get a live push the moment a notification row is
--- inserted (so a "someone messaged you" toast can pop up without polling).
--- Idempotent — ALTER PUBLICATION has no "ADD TABLE IF NOT EXISTS", so check first.
+-- inserted (so a "someone messaged you" toast can pop up without polling),
+-- and the same for messages (so an open ChatThread updates instantly
+-- instead of only on next mount/refresh). Idempotent — ALTER PUBLICATION
+-- has no "ADD TABLE IF NOT EXISTS", so check first.
 do $$
 begin
   if not exists (
@@ -445,6 +478,12 @@ begin
     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications'
   ) then
     alter publication supabase_realtime add table notifications;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages'
+  ) then
+    alter publication supabase_realtime add table messages;
   end if;
 end $$;
 

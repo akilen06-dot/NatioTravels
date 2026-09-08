@@ -5,6 +5,8 @@ import { fieldClasses } from '../../lib/fieldClasses'
 import Button from '../../components/Button'
 import Avatar from '../../components/Avatar'
 import { useStore } from '../../lib/store'
+import { isBackendConfigured } from '../../lib/supabaseClient'
+import { subscribeToConversation } from '../../lib/api/messages'
 import { readAndResizeImage, readFileAsDataUrl } from '../../lib/imageFile'
 
 function Attachment({ attachment }) {
@@ -36,7 +38,9 @@ export default function ChatThread() {
   const { id } = useParams()
   const navigate = useNavigate()
   const thread = useStore((s) => s.threads[id])
+  const currentUserId = useStore((s) => s.currentUser?.id)
   const sendMessage = useStore((s) => s.sendMessage)
+  const receiveMessage = useStore((s) => s.receiveMessage)
   const blockedIds = useStore((s) => s.blockedIds)
   const unblockUser = useStore((s) => s.unblockUser)
   const refreshThreads = useStore((s) => s.refreshThreads)
@@ -46,15 +50,33 @@ export default function ChatThread() {
   const [attaching, setAttaching] = useState(false)
   const [sending, setSending] = useState(false)
   const fileInputRef = useRef(null)
+  const messagesEndRef = useRef(null)
   // A thread can exist on the server before it's in this device's local
   // cache (e.g. the other person just completed the match) — refresh once
   // before concluding it really doesn't exist.
   const [checked, setChecked] = useState(false)
 
+  // Keep the latest message in view — matters most for a live reply landing
+  // while this thread is already open.
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'end' })
+  }, [thread?.messages.length])
+
   useEffect(() => {
     refreshThreads().finally(() => setChecked(true))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Live updates while this thread is open — without this, a reply from the
+  // other person only shows up next time this screen mounts/refreshes.
+  useEffect(() => {
+    if (!isBackendConfigured || !thread?.conversationId || !currentUserId) return
+    const unsubscribe = subscribeToConversation(thread.conversationId, currentUserId, (message) => {
+      if (message.from === 'me') return // own sends already land via sendMessage's own refresh
+      receiveMessage(id, message)
+    })
+    return unsubscribe
+  }, [thread?.conversationId, currentUserId, id, receiveMessage])
 
   if (!thread) {
     if (!checked) return <p className="p-8 text-center text-ink-muted">Loading…</p>
@@ -133,6 +155,7 @@ export default function ChatThread() {
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {isBlocked ? (

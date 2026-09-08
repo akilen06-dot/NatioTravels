@@ -271,6 +271,36 @@ rejected the send (most likely cause: signed up with a different email than `ADM
 
 ---
 
+## Email verification (soft — never blocks signing in)
+
+Confirms a real user's email is actually reachable, shown as a small banner until they click the
+link. Doesn't touch onboarding at all — the account is created and usable immediately either way,
+same as before this existed.
+
+Unlike the report alert, this emails your **users**, so it can't use the shared
+`onboarding@resend.dev` sender (that one only ever delivers to the Resend account's own email).
+You need your own domain verified with Resend:
+
+1. In the Resend dashboard, go to **Domains → Add Domain**, enter `natiotravels.com`, and follow
+   the DNS records it gives you.
+2. Add those records in **Vercel → your project → Settings → Domains → natiotravels.com → DNS
+   Records** (same place you'd manage any DNS for a domain bought through Vercel).
+3. Wait for Resend to show the domain as verified (usually a few minutes, DNS can take longer).
+4. Set the new secrets and deploy:
+   ```bash
+   supabase secrets set EMAIL_FROM="Natio <noreply@natiotravels.com>" \
+     SITE_URL=https://natiotravels.com
+   supabase functions deploy send-verification-email
+   ```
+   (`RESEND_API_KEY` is already set from the report-alert setup above — reused here.)
+5. Re-run `schema.sql` (adds the `email_verified`/`email_verify_token` columns and the
+   `verify_email_token` function).
+
+Test it: sign up a new real account, check that email's inbox for a "Confirm your email for
+Natio" message, click the link — the banner should disappear next time the app loads.
+
+---
+
 ## Rate limiting & abuse prevention
 
 Two layers, one you configure in a dashboard and one already built into `schema.sql`.

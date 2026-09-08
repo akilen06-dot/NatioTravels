@@ -11,6 +11,7 @@ import {
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
 import NotificationToasts from './NotificationToasts'
+import EmailVerifyBanner from './EmailVerifyBanner'
 import Avatar from './Avatar'
 import { useStore } from '../lib/store'
 import { useT } from '../lib/i18n'
@@ -110,6 +111,8 @@ export default function AppShell() {
           </div>
           <ThemeToggle />
         </header>
+
+        <EmailVerifyBanner />
 
         <main className="min-h-0 flex-1 overflow-y-auto pb-16 md:pb-0">
           <Outlet />

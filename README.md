@@ -21,6 +21,12 @@ npm run dev
   - **Error monitoring** — real Sentry crash reporting for the frontend.
   - **Report alerts** — an email to you the moment someone submits a report, via a Database
     Webhook and Resend.
+  - **Email verification** — a real confirmation email sent via Resend after signup; soft (never
+    blocks access), shown as a banner until confirmed.
+- **Live chat** — an open conversation updates the instant the other person replies, via Supabase
+  Realtime, once a real backend is configured.
+- **Terms acceptance** — signup requires checking a box agreeing to the Terms & Privacy Policy
+  before an account can be created.
 - **Abuse prevention** — database-enforced rate limits on messages, swipes, reports, and post
   comments (can't be bypassed by calling the API directly), always on regardless of the above.
 - Without those keys, everything falls back to local mock data persisted to `localStorage` (zustand `persist`), exactly like the original prototype.

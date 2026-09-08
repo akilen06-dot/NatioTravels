@@ -27,6 +27,7 @@ export function mapProfileRow(row) {
     photo: row.photo_url,
     bio: row.bio ?? '',
     verified: row.verified,
+    emailVerified: row.email_verified,
     plan: row.plan,
     billing: row.billing,
     tripStart: row.trip_start,
@@ -183,4 +184,20 @@ export async function deleteMyProfile(id) {
   const { error } = await supabase.from('profiles').delete().eq('id', id)
   if (error) throw error
   await signOut()
+}
+
+// Fire-and-forget from the caller's point of view — soft verification never
+// blocks anything, so a failure here shouldn't surface as an error the user
+// has to deal with.
+export async function sendVerificationEmail() {
+  const { error } = await supabase.functions.invoke('send-verification-email', { body: {} })
+  if (error) throw error
+}
+
+// Called from /verify-email. No session required — the token itself proves
+// the click is genuine (see verify_email_token in schema.sql).
+export async function verifyEmailToken(token) {
+  const { data, error } = await supabase.rpc('verify_email_token', { token })
+  if (error) throw error
+  return !!data
 }

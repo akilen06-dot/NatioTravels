@@ -5,6 +5,18 @@ function pairKey(a, b) {
   return a < b ? [a, b] : [b, a]
 }
 
+function mapMessageRow(m, userId) {
+  return {
+    id: m.id,
+    from: m.sender_id === userId ? 'me' : m.sender_id,
+    text: m.text ?? '',
+    attachment: m.attachment_url
+      ? { url: m.attachment_url, type: m.attachment_type, name: m.attachment_name }
+      : null,
+    at: m.created_at,
+  }
+}
+
 export async function getOrCreateConversation(userId, otherId) {
   const [a, b] = pairKey(userId, otherId)
   const { data: existing } = await supabase
@@ -57,15 +69,7 @@ export async function listConversations(userId) {
       type: 'match',
       name: profileById[otherId]?.name,
       photo: profileById[otherId]?.photo_url,
-      messages: (messages || []).map((m) => ({
-        id: m.id,
-        from: m.sender_id === userId ? 'me' : m.sender_id,
-        text: m.text ?? '',
-        attachment: m.attachment_url
-          ? { url: m.attachment_url, type: m.attachment_type, name: m.attachment_name }
-          : null,
-        at: m.created_at,
-      })),
+      messages: (messages || []).map((m) => mapMessageRow(m, userId)),
     })
   }
   return results
@@ -85,4 +89,19 @@ export async function sendMessage(userId, otherId, text, attachment) {
   if (error) throw error
   const preview = text?.trim() || (attachment ? (attachment.type === 'image' ? 'Sent a photo' : `Sent a file: ${attachment.name}`) : '')
   await notify(otherId, userId, 'message', { conversationId, preview: preview.slice(0, 140) })
+}
+
+// Live push the moment a new message lands in this conversation, so an open
+// ChatThread updates instantly instead of only on next mount/refresh.
+// Returns an unsubscribe function.
+export function subscribeToConversation(conversationId, userId, onInsert) {
+  const channel = supabase
+    .channel(`messages:${conversationId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
+      (payload) => onInsert(mapMessageRow(payload.new, userId)),
+    )
+    .subscribe()
+  return () => supabase.removeChannel(channel)
 }
