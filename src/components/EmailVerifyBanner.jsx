@@ -11,27 +11,33 @@ export default function EmailVerifyBanner() {
   const sendVerificationEmail = useStore((s) => s.sendVerificationEmail)
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
   if (!isBackendConfigured || !currentUser || currentUser.emailVerified) return null
 
   async function handleResend() {
     setSending(true)
-    await sendVerificationEmail()
+    setError('')
+    const result = await sendVerificationEmail()
     setSending(false)
-    setSent(true)
+    if (result?.ok) {
+      setSent(true)
+    } else {
+      setError(result?.error || 'Could not send the email. Try again in a moment.')
+    }
   }
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-b border-border bg-accent-tint px-4 py-2 text-center text-[12.5px] text-accent-strong">
       <EnvelopeSimple size={15} className="shrink-0" />
-      <span>Verify your email to secure your account.</span>
+      <span>{error ? error : 'Verify your email to secure your account.'}</span>
       <button
         type="button"
         onClick={handleResend}
         disabled={sending || sent}
         className="font-medium underline underline-offset-2 disabled:opacity-60 cursor-pointer"
       >
-        {sent ? 'Email sent' : sending ? 'Sending…' : 'Resend email'}
+        {sent ? 'Email sent' : sending ? 'Sending…' : error ? 'Try again' : 'Resend email'}
       </button>
     </div>
   )

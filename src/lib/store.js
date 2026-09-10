@@ -458,11 +458,13 @@ export const useStore = create(
       // failing to send this email shouldn't block signup completing or
       // surface as an error the user has to deal with.
       sendVerificationEmail: async () => {
-        if (!isBackendConfigured) return
+        if (!isBackendConfigured) return { ok: false }
         try {
           await profilesApi.sendVerificationEmail()
+          return { ok: true }
         } catch (err) {
           console.error('Failed to send verification email:', err)
+          return { ok: false, error: err instanceof Error ? err.message : 'Could not send email.' }
         }
       },
 
