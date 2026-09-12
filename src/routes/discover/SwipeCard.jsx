@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useImperativeHandle, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { MapPinLine, ShieldCheck, X, Heart } from '@phosphor-icons/react'
 import Avatar from '../../components/Avatar'
+import { formatLocation } from '../../lib/formatLocation'
 
 const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, ref) {
   const reduce = useReducedMotion()
@@ -60,7 +61,7 @@ const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, 
         </div>
         <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/85">
           <MapPinLine size={14} />
-          {traveler.distanceKm} km away · {traveler.country}
+          {traveler.distanceKm} km away · {formatLocation(traveler)}
         </div>
         <p className="mt-2 text-[13.5px] text-white/90">{traveler.bio}</p>
       </div>

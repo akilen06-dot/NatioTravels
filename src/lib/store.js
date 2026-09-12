@@ -15,6 +15,7 @@ import * as messagesApi from './api/messages'
 import * as postsApi from './api/posts'
 import * as moderationApi from './api/moderation'
 import * as notificationsApi from './api/notifications'
+import { requestGeolocation, fuzzCoordinates, reverseGeocode, isGeocodingConfigured } from './geocode'
 
 // The live realtime subscription's unsubscribe function. Kept outside the
 // store (not in state) since it's not JSON-serializable and persist() would
@@ -251,6 +252,34 @@ export const useStore = create(
         if (!isBackendConfigured) return
         const profile = await profilesApi.getCurrentAuthedProfile()
         set({ currentUser: profile })
+      },
+
+      // Called once per app open (see AppShell). Silently does nothing
+      // without a real backend, a geocoding key, or if the browser denies/
+      // lacks geolocation — this is a nice-to-have, never something that
+      // should nag or block. Only ever writes currentCountry/currentCity
+      // when the detected country differs from home (see formatLocation.js);
+      // otherwise clears them so a returned-home traveler stops showing as
+      // "visiting" their own country.
+      refreshCurrentLocation: async () => {
+        if (!isBackendConfigured || !isGeocodingConfigured) return
+        const user = get().currentUser
+        if (!user) return
+        try {
+          const raw = await requestGeolocation()
+          const fuzzed = fuzzCoordinates(raw)
+          const place = await reverseGeocode(fuzzed)
+          if (!place?.country) return
+          const traveling = place.country !== user.country
+          await get().updateCurrentUser({
+            lat: fuzzed.lat,
+            lng: fuzzed.lng,
+            currentCountry: traveling ? place.country : null,
+            currentCity: traveling ? place.city : null,
+          })
+        } catch {
+          // Permission denied, timed out, or unsupported — fail silently.
+        }
       },
 
       // `identifier` can be either an email or a username.

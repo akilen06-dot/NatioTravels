@@ -4,6 +4,7 @@ import Button from '../../components/Button'
 import PostGrid from '../../components/PostGrid'
 import Avatar from '../../components/Avatar'
 import { useStore, isTripLocked, isTripCapped, tripPassExpiry } from '../../lib/store'
+import { formatLocation } from '../../lib/formatLocation'
 
 function daysLeft(expiry) {
   if (!expiry) return null
@@ -62,9 +63,7 @@ export default function ProfileScreen() {
       {currentUser.username && (
         <p className="text-[13px] text-ink-faint">@{currentUser.username}</p>
       )}
-      <p className="mt-1 text-[13.5px] text-ink-muted">
-        {currentUser.country} · {currentUser.city}
-      </p>
+      <p className="mt-1 text-[13.5px] text-ink-muted">{formatLocation(currentUser)}</p>
       <p className="mt-2 text-[14px] leading-relaxed text-ink">{currentUser.bio}</p>
 
       <Button variant="secondary" size="sm" className="mt-4 w-full" onClick={() => navigate('/profile/edit')}>

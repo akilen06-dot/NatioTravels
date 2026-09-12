@@ -24,6 +24,8 @@ export function mapProfileRow(row) {
     dob: row.dob,
     country: row.country,
     city: row.city,
+    currentCountry: row.current_country,
+    currentCity: row.current_city,
     photo: row.photo_url,
     bio: row.bio ?? '',
     verified: row.verified,
@@ -147,6 +149,8 @@ export async function updateProfile(id, patch) {
   }
   if ('lat' in patch) dbPatch.lat = patch.lat
   if ('lng' in patch) dbPatch.lng = patch.lng
+  if ('currentCountry' in patch) dbPatch.current_country = patch.currentCountry
+  if ('currentCity' in patch) dbPatch.current_city = patch.currentCity
 
   if (Object.keys(dbPatch).length === 0) return getProfile(id)
 

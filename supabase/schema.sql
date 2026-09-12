@@ -56,6 +56,13 @@ alter table profiles add column if not exists paddle_subscription_id text;
 alter table profiles add column if not exists email_verified boolean not null default false;
 alter table profiles add column if not exists email_verify_token uuid;
 
+-- Detected on each app open (see refreshCurrentLocation in src/lib/store.js)
+-- from real (fuzzed) GPS + reverse geocoding. Only ever set when the
+-- detected country differs from `country` (home) — null otherwise, meaning
+-- "currently at home."
+alter table profiles add column if not exists current_country text;
+alter table profiles add column if not exists current_city text;
+
 -- ============================================================================
 -- Swiping / matching
 -- ============================================================================

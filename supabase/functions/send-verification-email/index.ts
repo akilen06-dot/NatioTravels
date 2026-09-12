@@ -16,6 +16,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 const resendApiKey = Deno.env.get('RESEND_API_KEY')!
 const emailFrom = Deno.env.get('EMAIL_FROM')!
 const siteUrl = Deno.env.get('SITE_URL')!
+const replyToEmail = Deno.env.get('ADMIN_EMAIL')!
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,6 +72,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: emailFrom,
         to: [profile.email],
+        reply_to: replyToEmail,
         subject: 'Confirm your email for Natio',
         html: `
           <p>Tap the link below to confirm your email address.</p>
