@@ -184,8 +184,12 @@ export async function confirmPasswordReset(newPassword) {
   if (error) throw error
 }
 
-export async function deleteMyProfile(id) {
-  const { error } = await supabase.from('profiles').delete().eq('id', id)
+// Deletes the auth user (via an Edge Function using the service role key —
+// not possible from the client under RLS alone), which cascades to the
+// `profiles` row and everything tied to it. Deleting only `profiles` directly
+// would leave an orphaned, unusable auth account behind.
+export async function deleteMyProfile() {
+  const { error } = await supabase.functions.invoke('delete-account', { body: {} })
   if (error) throw error
   await signOut()
 }

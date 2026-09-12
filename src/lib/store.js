@@ -981,7 +981,7 @@ export const useStore = create(
         notificationsUnsub?.()
         notificationsUnsub = null
         if (isBackendConfigured) {
-          await profilesApi.deleteMyProfile(s.currentUser.id)
+          await profilesApi.deleteMyProfile()
           set({
             currentUser: null,
             auth: 'signed-out',
