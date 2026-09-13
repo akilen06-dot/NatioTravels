@@ -265,6 +265,7 @@ export const useStore = create(
       // formatLocation.js), cleared otherwise so a returned-home traveler
       // stops showing as "visiting" their own country.
       refreshCurrentLocation: async () => {
+        console.log('[location] refreshCurrentLocation called', { isBackendConfigured, isGeocodingConfigured })
         if (!isBackendConfigured || !isGeocodingConfigured) return
         const user = get().currentUser
         if (!user) return
@@ -272,6 +273,7 @@ export const useStore = create(
           const raw = await requestGeolocation()
           const fuzzed = fuzzCoordinates(raw)
           const place = await reverseGeocode(fuzzed)
+          console.log('[location] geocoded place:', place, 'home country:', user.country)
           const patch = { lat: fuzzed.lat, lng: fuzzed.lng }
           if (place?.city) patch.city = place.city
           if (place?.country) {
@@ -279,7 +281,9 @@ export const useStore = create(
             patch.currentCountry = traveling ? place.country : null
             patch.currentCity = traveling ? place.city : null
           }
+          console.log('[location] writing patch:', patch)
           await get().updateCurrentUser(patch)
+          console.log('[location] patch written successfully')
         } catch (err) {
           // Still fails soft (never surfaces to the user) — logged so it's
           // actually diagnosable, since permission-denied/timeout/API
