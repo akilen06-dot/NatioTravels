@@ -257,10 +257,13 @@ export const useStore = create(
       // Called once per app open (see AppShell). Silently does nothing
       // without a real backend, a geocoding key, or if the browser denies/
       // lacks geolocation — this is a nice-to-have, never something that
-      // should nag or block. Only ever writes currentCountry/currentCity
-      // when the detected country differs from home (see formatLocation.js);
-      // otherwise clears them so a returned-home traveler stops showing as
-      // "visiting" their own country.
+      // should nag or block. `country` (nationality) is never touched here —
+      // only ever set once at signup — but `city`/`lat`/`lng` always refresh
+      // to wherever the user actually is right now, same as Discover
+      // proximity depends on. currentCountry/currentCity are separate: only
+      // written when the detected country differs from home (see
+      // formatLocation.js), cleared otherwise so a returned-home traveler
+      // stops showing as "visiting" their own country.
       refreshCurrentLocation: async () => {
         if (!isBackendConfigured || !isGeocodingConfigured) return
         const user = get().currentUser
@@ -269,14 +272,14 @@ export const useStore = create(
           const raw = await requestGeolocation()
           const fuzzed = fuzzCoordinates(raw)
           const place = await reverseGeocode(fuzzed)
-          if (!place?.country) return
-          const traveling = place.country !== user.country
-          await get().updateCurrentUser({
-            lat: fuzzed.lat,
-            lng: fuzzed.lng,
-            currentCountry: traveling ? place.country : null,
-            currentCity: traveling ? place.city : null,
-          })
+          const patch = { lat: fuzzed.lat, lng: fuzzed.lng }
+          if (place?.city) patch.city = place.city
+          if (place?.country) {
+            const traveling = place.country !== user.country
+            patch.currentCountry = traveling ? place.country : null
+            patch.currentCity = traveling ? place.city : null
+          }
+          await get().updateCurrentUser(patch)
         } catch {
           // Permission denied, timed out, or unsupported — fail silently.
         }
