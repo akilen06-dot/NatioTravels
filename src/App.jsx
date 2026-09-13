@@ -10,7 +10,7 @@ import SignIn from './routes/auth/SignIn'
 import ForgotPassword from './routes/auth/ForgotPassword'
 import ResetPassword from './routes/auth/ResetPassword'
 import VerifyEmail from './routes/auth/VerifyEmail'
-import OnboardingGuard, { PlanGuard } from './components/OnboardingGuard'
+import OnboardingGuard, { PlanGuard, RedirectIfAuthed } from './components/OnboardingGuard'
 import LocationPermission from './routes/onboarding/LocationPermission'
 import IdentityVerification from './routes/onboarding/IdentityVerification'
 import AddProfilePhoto from './routes/onboarding/AddProfilePhoto'
@@ -42,17 +42,20 @@ import LanguageSettings from './routes/profile/settings/LanguageSettings'
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
       <Route path="/about" element={<About />} />
       <Route path="/safety" element={<SafetyPolicy />} />
       <Route path="/terms" element={<Terms />} />
-      <Route path="/start" element={<Start />} />
-      <Route path="/auth" element={<AuthChoice />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/signin" element={<SignIn />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+
+      <Route element={<RedirectIfAuthed />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/start" element={<Start />} />
+        <Route path="/auth" element={<AuthChoice />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+      </Route>
 
       <Route element={<OnboardingGuard />}>
         <Route path="/onboarding/location" element={<LocationPermission />} />
