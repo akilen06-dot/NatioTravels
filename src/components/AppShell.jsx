@@ -62,12 +62,19 @@ export default function AppShell() {
   const currentUser = useStore((s) => s.currentUser)
   const signOut = useStore((s) => s.signOut)
   const refreshCurrentLocation = useStore((s) => s.refreshCurrentLocation)
+  const hydrate = useStore((s) => s.hydrate)
   const t = useT()
 
-  // Once per app open (not on every route change within it) — see
-  // refreshCurrentLocation in store.js for why this silently no-ops most
-  // of the time (no backend, no geocoding key, permission denied, etc.).
+  // Once per app open (not on every route change within it). currentUser/auth
+  // are persisted to localStorage and survive a reload on their own, but
+  // nothing else does automatically — without this, reopening the app with
+  // an already-remembered session would keep showing whatever notifications/
+  // matches/messages were cached from the last real sign-in, never picking
+  // up anything that happened elsewhere since. hydrate() is a no-op without
+  // a real backend; refreshCurrentLocation() no-ops without a geocoding key
+  // or if permission is denied — see store.js.
   useEffect(() => {
+    hydrate()
     refreshCurrentLocation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
