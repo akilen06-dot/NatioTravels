@@ -147,6 +147,7 @@ export async function updateProfile(id, patch) {
     const { error: pwErr } = await supabase.auth.updateUser({ password: patch.password })
     if (pwErr) throw pwErr
   }
+  if ('city' in patch) dbPatch.city = patch.city
   if ('lat' in patch) dbPatch.lat = patch.lat
   if ('lng' in patch) dbPatch.lng = patch.lng
   if ('currentCountry' in patch) dbPatch.current_country = patch.currentCountry
