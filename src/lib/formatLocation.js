@@ -4,7 +4,10 @@
 export function formatLocation(person) {
   if (!person) return ''
   if (person.currentCountry && person.currentCountry !== person.country) {
-    return `From ${person.country}, visiting ${person.currentCity || person.currentCountry}`
+    const visiting = person.currentCity
+      ? `${person.currentCity}, ${person.currentCountry}`
+      : person.currentCountry
+    return `From: ${person.country}  Visiting: ${visiting}`
   }
-  return person.city ? `${person.country} · ${person.city}` : person.country || ''
+  return `From: ${person.country || ''}`
 }
