@@ -280,8 +280,11 @@ export const useStore = create(
             patch.currentCity = traveling ? place.city : null
           }
           await get().updateCurrentUser(patch)
-        } catch {
-          // Permission denied, timed out, or unsupported — fail silently.
+        } catch (err) {
+          // Still fails soft (never surfaces to the user) — logged so it's
+          // actually diagnosable, since permission-denied/timeout/API
+          // errors otherwise leave zero trace.
+          console.error('refreshCurrentLocation failed:', err)
         }
       },
 
