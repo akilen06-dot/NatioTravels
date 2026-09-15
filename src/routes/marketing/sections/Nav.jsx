@@ -6,9 +6,9 @@ import ThemeToggle from '../../../components/ThemeToggle'
 import Logo from '../../../components/Logo'
 
 const links = [
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Safety', href: '#safety' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'How it works', href: '/#how-it-works' },
+  { label: 'Safety', href: '/#safety' },
+  { label: 'Pricing', href: '/#pricing' },
 ]
 
 export default function Nav() {

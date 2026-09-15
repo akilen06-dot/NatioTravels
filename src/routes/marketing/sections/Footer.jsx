@@ -5,9 +5,9 @@ const columns = [
   {
     heading: 'Product',
     links: [
-      { label: 'How it works', href: '#how-it-works' },
-      { label: 'Safety', href: '#safety' },
-      { label: 'Pricing', href: '#pricing' },
+      { label: 'How it works', href: '/#how-it-works' },
+      { label: 'Safety', href: '/#safety' },
+      { label: 'Pricing', href: '/#pricing' },
     ],
   },
   {
@@ -20,7 +20,7 @@ const columns = [
   {
     heading: 'Legal',
     links: [
-      { label: 'Privacy', href: '#' },
+      { label: 'Privacy', href: '/terms' },
       { label: 'Terms', href: '/terms' },
     ],
   },
