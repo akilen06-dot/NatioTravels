@@ -14,7 +14,7 @@ const columns = [
     heading: 'Company',
     links: [
       { label: 'About', href: '/about' },
-      { label: 'natiotravels@gmail.com', href: 'mailto:natiotravels@gmail.com' },
+      { label: 'Contact us: natiotravels@gmail.com', href: 'mailto:natiotravels@gmail.com' },
     ],
   },
   {
