@@ -6,10 +6,12 @@ import TripLockedNotice from '../../components/TripLockedNotice'
 import Button from '../../components/Button'
 import Avatar from '../../components/Avatar'
 import { useStore, hasAccess, isTripLocked } from '../../lib/store'
+import { useT } from '../../lib/i18n'
 
 const FREE_SEARCH_LIMIT = 5
 
 export default function SearchScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const travelers = useStore((s) => s.travelers)
@@ -39,15 +41,15 @@ export default function SearchScreen() {
   if (locked) {
     return (
       <TripLockedNotice
-        title="Search is locked"
-        body="Trip passes cover up to 14 days. Renew your plan to search for other travelers."
+        title={t('Search is locked')}
+        body={t('Trip passes cover up to 14 days. Renew your plan to search for other travelers.')}
       />
     )
   }
 
   return (
     <div className="mx-auto max-w-lg px-5 py-8">
-      <h1 className="text-xl font-semibold text-ink">Search</h1>
+      <h1 className="text-xl font-semibold text-ink">{t('Search')}</h1>
 
       <div className="relative mt-5">
         <MagnifyingGlass
@@ -57,7 +59,7 @@ export default function SearchScreen() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or nationality"
+          placeholder={t('Search by name or nationality')}
           className={fieldClasses(false, { icon: true })}
         />
       </div>
@@ -66,7 +68,7 @@ export default function SearchScreen() {
         {people.length === 0 ? (
           <div className="flex flex-col items-center py-14 text-center">
             <UsersFour size={28} className="text-ink-faint" />
-            <p className="mt-2 text-[13.5px] text-ink-muted">No one matches that search.</p>
+            <p className="mt-2 text-[13.5px] text-ink-muted">{t('No one matches that search.')}</p>
           </div>
         ) : (
           people.map((p) => (
@@ -96,13 +98,15 @@ export default function SearchScreen() {
         <div className="mt-5 flex flex-col items-center rounded-2xl border border-dashed border-border-strong px-5 py-6 text-center">
           <Lock size={20} className="text-ink-faint" />
           <p className="mt-2 text-[13.5px] font-medium text-ink">
-            {hiddenCount} more {hiddenCount === 1 ? 'result' : 'results'} hidden
+            {hiddenCount === 1
+              ? t('{count} more result hidden', { count: hiddenCount })
+              : t('{count} more results hidden', { count: hiddenCount })}
           </p>
           <p className="mt-1 text-[12.5px] text-ink-muted">
-            Free search is limited to {FREE_SEARCH_LIMIT} people. Add a plan to see everyone.
+            {t('Free search is limited to {limit} people. Add a plan to see everyone.', { limit: FREE_SEARCH_LIMIT })}
           </p>
           <Button size="sm" className="mt-4" onClick={() => navigate('/onboarding/plan')}>
-            Add a plan to unlock
+            {t('Add a plan to unlock')}
           </Button>
         </div>
       )}

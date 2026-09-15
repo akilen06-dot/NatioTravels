@@ -8,8 +8,10 @@ import { useStore } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
 import { subscribeToConversation } from '../../lib/api/messages'
 import { readAndResizeImage, readFileAsDataUrl } from '../../lib/imageFile'
+import { useT } from '../../lib/i18n'
 
 function Attachment({ attachment }) {
+  const t = useT()
   if (!attachment) return null
   if (attachment.type === 'image') {
     return (
@@ -29,12 +31,13 @@ function Attachment({ attachment }) {
       className="flex items-center gap-2.5 rounded-xl bg-black/10 px-3 py-2.5 underline-offset-2 hover:underline"
     >
       <File size={20} className="shrink-0" />
-      <span className="min-w-0 truncate text-[13.5px]">{attachment.name || 'File'}</span>
+      <span className="min-w-0 truncate text-[13.5px]">{attachment.name || t('File')}</span>
     </a>
   )
 }
 
 export default function ChatThread() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const thread = useStore((s) => s.threads[id])
@@ -79,8 +82,8 @@ export default function ChatThread() {
   }, [thread?.conversationId, currentUserId, id, receiveMessage])
 
   if (!thread) {
-    if (!checked) return <p className="p-8 text-center text-ink-muted">Loading…</p>
-    return <p className="p-8 text-center text-ink-muted">Conversation not found.</p>
+    if (!checked) return <p className="p-8 text-center text-ink-muted">{t('Loading…')}</p>
+    return <p className="p-8 text-center text-ink-muted">{t('Conversation not found.')}</p>
   }
 
   const personId = thread.type === 'match' ? id.replace(/^match-/, '') : null
@@ -101,7 +104,7 @@ export default function ChatThread() {
         setPendingAttachment({ url, type: 'file', name: file.name })
       }
     } catch (err) {
-      setAttachError(err.message || "Couldn't attach that file.")
+      setAttachError(err.message || t("Couldn't attach that file."))
     } finally {
       setAttaching(false)
     }
@@ -126,7 +129,7 @@ export default function ChatThread() {
         <button
           type="button"
           onClick={() => navigate('/messages')}
-          aria-label="Back"
+          aria-label={t('Back')}
           className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
         >
           <ArrowLeft size={18} />
@@ -138,7 +141,7 @@ export default function ChatThread() {
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-5">
         {thread.messages.length === 0 ? (
           <p className="mt-8 text-center text-[13.5px] text-ink-muted">
-            Say hi to {thread.name}.
+            {t('Say hi to {name}.', { name: thread.name })}
           </p>
         ) : (
           thread.messages.map((m) => (
@@ -162,10 +165,10 @@ export default function ChatThread() {
         <div className="flex items-center justify-between gap-3 border-t border-border bg-danger-tint px-5 py-3.5">
           <p className="flex items-center gap-2 text-[13px] text-danger">
             <ProhibitInset size={16} />
-            You've blocked {thread.name}. Unblock to send messages.
+            {t("You've blocked {name}. Unblock to send messages.", { name: thread.name })}
           </p>
           <Button variant="secondary" size="sm" onClick={() => unblockUser(personId)}>
-            Unblock
+            {t('Unblock')}
           </Button>
         </div>
       ) : (
@@ -186,7 +189,7 @@ export default function ChatThread() {
               <button
                 type="button"
                 onClick={() => setPendingAttachment(null)}
-                aria-label="Remove attachment"
+                aria-label={t('Remove attachment')}
                 className="shrink-0 text-ink-faint hover:text-ink cursor-pointer"
               >
                 <X size={16} />
@@ -204,7 +207,7 @@ export default function ChatThread() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={attaching}
-              aria-label="Attach a photo or file"
+              aria-label={t('Attach a photo or file')}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken disabled:opacity-50 cursor-pointer"
             >
               <Paperclip size={19} />
@@ -212,12 +215,12 @@ export default function ChatThread() {
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Message"
+              placeholder={t('Message')}
               className={fieldClasses(false)}
             />
             <button
               type="submit"
-              aria-label="Send"
+              aria-label={t('Send')}
               disabled={sending || attaching || (!text.trim() && !pendingAttachment)}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-strong text-white transition-colors duration-200 hover:bg-accent-strong/90 disabled:opacity-50 cursor-pointer"
             >

@@ -6,8 +6,10 @@ import TripLockedNotice from '../../components/TripLockedNotice'
 import RatingPrompt from '../../components/RatingPrompt'
 import Avatar from '../../components/Avatar'
 import { useStore, hasAccess, findPersonById, PROMO_WEEKLY_GROUP_JOIN_LIMIT } from '../../lib/store'
+import { useT } from '../../lib/i18n'
 
 function Person({ id }) {
+  const t = useT()
   const person = useStore((s) => findPersonById(s, id))
   const isYou = useStore((s) => s.currentUser?.id === id)
   if (!person) return null
@@ -17,7 +19,7 @@ function Person({ id }) {
       <div>
         <p className="text-[14px] font-medium text-ink">
           {person.name}
-          {isYou && <span className="text-ink-muted"> (you)</span>}
+          {isYou && <span className="text-ink-muted"> {t('(you)')}</span>}
         </p>
         <p className="text-[12.5px] text-ink-muted">{person.country}</p>
       </div>
@@ -26,6 +28,7 @@ function Person({ id }) {
 }
 
 export default function GroupDetail() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
@@ -50,20 +53,20 @@ export default function GroupDetail() {
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
       <TripLockedNotice
-        title="Group details are locked"
-        body="Trip passes cover up to 14 days. Renew your plan to see meetup locations again."
+        title={t('Group details are locked')}
+        body={t('Trip passes cover up to 14 days. Renew your plan to see meetup locations again.')}
       />
     ) : (
       <TripLockedNotice
-        title="Groups are for paying travelers"
-        body="Add a Trip Pass or subscription to see meetup locations and join in."
-        ctaLabel="Add a plan to unlock"
+        title={t('Groups are for paying travelers')}
+        body={t('Add a Trip Pass or subscription to see meetup locations and join in.')}
+        ctaLabel={t('Add a plan to unlock')}
       />
     )
   }
 
   if (!group) {
-    return <p className="p-8 text-center text-ink-muted">Group not found.</p>
+    return <p className="p-8 text-center text-ink-muted">{t('Group not found.')}</p>
   }
 
   const isOwner = group.ownerId === currentUser.id
@@ -82,9 +85,9 @@ export default function GroupDetail() {
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-danger-tint text-danger">
           <ProhibitInset size={24} />
         </span>
-        <h2 className="mt-5 text-xl font-semibold text-ink">Group unavailable</h2>
+        <h2 className="mt-5 text-xl font-semibold text-ink">{t('Group unavailable')}</h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
-          You've blocked the organizer of this group, so it's hidden from you.
+          {t("You've blocked the organizer of this group, so it's hidden from you.")}
         </p>
       </div>
     )
@@ -100,22 +103,24 @@ export default function GroupDetail() {
         onClick={() => navigate('/groups')}
         className="text-[13.5px] text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
       >
-        ← Back to groups
+        {t('← Back to groups')}
       </button>
 
       <div className="mt-4 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">{group.name}</h1>
-          <p className="mt-1 text-[14px] text-ink-muted">{group.nationality} nationality meetup</p>
+          <p className="mt-1 text-[14px] text-ink-muted">
+            {t('{nationality} nationality meetup', { nationality: group.nationality })}
+          </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <span className="rounded-full bg-accent-tint px-3 py-1 text-[12.5px] font-medium text-accent-strong">
-            {visibleMembers.length} going
+            {t('{count} going', { count: visibleMembers.length })}
           </span>
           {avgRating && (
             <span className="flex items-center gap-1 text-[12.5px] text-ink-muted">
               <Star size={13} weight="fill" className="text-coral" />
-              {avgRating} ({ratings.length})
+              {t('{rating} ({count})', { rating: avgRating, count: ratings.length })}
             </span>
           )}
         </div>
@@ -128,7 +133,7 @@ export default function GroupDetail() {
         </div>
         <div className="flex items-center gap-2">
           <MapPinLine size={17} />
-          Approximate area only, {group.city} · exact spot shared once you join
+          {t('Approximate area only, {city} · exact spot shared once you join', { city: group.city })}
         </div>
       </div>
 
@@ -143,12 +148,11 @@ export default function GroupDetail() {
       {!isMember && !isOwner && (
         <div className="mt-6">
           <Button onClick={handleRequestToJoin} disabled={hasRequested || joinLimitReached}>
-            {hasRequested ? 'Request sent' : 'Request to join'}
+            {hasRequested ? t('Request sent') : t('Request to join')}
           </Button>
           {joinLimitReached && (
             <p className="mt-2 text-[12.5px] text-danger">
-              Free access is capped at {PROMO_WEEKLY_GROUP_JOIN_LIMIT} group join requests a week.
-              Add a plan for unlimited groups.
+              {t('Free access is capped at {limit} group join requests a week. Add a plan for unlimited groups.', { limit: PROMO_WEEKLY_GROUP_JOIN_LIMIT })}
             </p>
           )}
         </div>
@@ -156,7 +160,7 @@ export default function GroupDetail() {
 
       {isMember && !isOwner && (
         <Button variant="secondary" className="mt-6" onClick={() => leaveGroup(group.id)}>
-          Leave group
+          {t('Leave group')}
         </Button>
       )}
 
@@ -165,14 +169,14 @@ export default function GroupDetail() {
           {confirmDelete ? (
             <div className="flex items-center gap-2.5 rounded-2xl border border-danger/40 bg-danger-tint p-3.5">
               <p className="flex-1 text-[13px] text-danger">
-                Delete this group for everyone? This can't be undone.
+                {t("Delete this group for everyone? This can't be undone.")}
               </p>
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 className="rounded-full px-2.5 py-1.5 text-[12.5px] text-ink-muted hover:bg-bg-sunken cursor-pointer"
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <Button
                 variant="danger"
@@ -184,7 +188,7 @@ export default function GroupDetail() {
                   navigate('/groups')
                 }}
               >
-                {deleting ? 'Deleting…' : 'Delete'}
+                {deleting ? t('Deleting…') : t('Delete')}
               </Button>
             </div>
           ) : (
@@ -194,7 +198,7 @@ export default function GroupDetail() {
               className="flex items-center gap-1.5 text-[13px] font-medium text-danger cursor-pointer"
             >
               <Trash size={15} />
-              Delete group
+              {t('Delete group')}
             </button>
           )}
         </div>
@@ -203,7 +207,7 @@ export default function GroupDetail() {
       {isOwner && visiblePendingRequests.length > 0 && (
         <section className="mt-8">
           <h2 className="text-[13px] font-medium text-ink-muted">
-            Requests to join ({visiblePendingRequests.length})
+            {t('Requests to join ({count})', { count: visiblePendingRequests.length })}
           </h2>
           <div className="mt-3 flex flex-col gap-3">
             {visiblePendingRequests.map((uid) => (
@@ -216,7 +220,7 @@ export default function GroupDetail() {
                   <button
                     type="button"
                     onClick={() => declineRequest(group.id, uid)}
-                    aria-label="Decline"
+                    aria-label={t('Decline')}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-strong text-ink-muted transition-colors duration-200 hover:text-danger hover:border-danger/40 cursor-pointer"
                   >
                     <X size={16} />
@@ -224,7 +228,7 @@ export default function GroupDetail() {
                   <button
                     type="button"
                     onClick={() => acceptRequest(group.id, uid)}
-                    aria-label="Accept"
+                    aria-label={t('Accept')}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent-strong text-white transition-colors duration-200 hover:bg-accent-strong/90 cursor-pointer"
                   >
                     <Check size={16} weight="bold" />
@@ -237,7 +241,7 @@ export default function GroupDetail() {
       )}
 
       <section className="mt-8">
-        <h2 className="text-[13px] font-medium text-ink-muted">Members</h2>
+        <h2 className="text-[13px] font-medium text-ink-muted">{t('Members')}</h2>
         <div className="mt-3 flex flex-col gap-3">
           {visibleMembers.map((uid) => (
             <div
@@ -248,13 +252,13 @@ export default function GroupDetail() {
               {isOwner && uid !== currentUser.id && (
                 confirmKick === uid ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-[12.5px] text-ink-muted">Remove?</span>
+                    <span className="text-[12.5px] text-ink-muted">{t('Remove?')}</span>
                     <button
                       type="button"
                       onClick={() => setConfirmKick(null)}
                       className="rounded-full px-2.5 py-1 text-[12.5px] text-ink-muted hover:bg-bg-sunken cursor-pointer"
                     >
-                      Cancel
+                      {t('Cancel')}
                     </button>
                     <button
                       type="button"
@@ -264,14 +268,14 @@ export default function GroupDetail() {
                       }}
                       className="rounded-full bg-danger px-2.5 py-1 text-[12.5px] font-medium text-white hover:bg-danger/90 cursor-pointer"
                     >
-                      Remove
+                      {t('Remove')}
                     </button>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setConfirmKick(uid)}
-                    aria-label="Remove member"
+                    aria-label={t('Remove member')}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-faint transition-colors duration-200 hover:text-danger hover:bg-danger-tint cursor-pointer"
                   >
                     <UserMinus size={17} />

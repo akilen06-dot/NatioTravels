@@ -3,8 +3,10 @@ import { motion, useMotionValue, useReducedMotion, useTransform } from 'motion/r
 import { MapPinLine, ShieldCheck, X, Heart } from '@phosphor-icons/react'
 import Avatar from '../../components/Avatar'
 import { formatLocation } from '../../lib/formatLocation'
+import { useT } from '../../lib/i18n'
 
 const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, ref) {
+  const t = useT()
   const reduce = useReducedMotion()
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-220, 220], [-14, 14])
@@ -45,13 +47,13 @@ const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, 
         style={{ opacity: likeOpacity }}
         className="absolute left-5 top-6 rounded-lg border-2 border-success px-3 py-1 text-lg font-bold uppercase tracking-wide text-success"
       >
-        Like
+        {t('Like')}
       </motion.div>
       <motion.div
         style={{ opacity: passOpacity }}
         className="absolute right-5 top-6 rounded-lg border-2 border-danger px-3 py-1 text-lg font-bold uppercase tracking-wide text-danger"
       >
-        Pass
+        {t('Pass')}
       </motion.div>
 
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-5 pt-16 text-white">
@@ -61,7 +63,7 @@ const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, 
         </div>
         <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/85">
           <MapPinLine size={14} />
-          {traveler.distanceKm} km away · {formatLocation(traveler)}
+          {t('{km} km away', { km: traveler.distanceKm })} · {formatLocation(t, traveler)}
         </div>
         <p className="mt-2 text-[13.5px] text-white/90">{traveler.bio}</p>
       </div>
@@ -72,12 +74,13 @@ const SwipeCard = forwardRef(function SwipeCard({ traveler, active, onSwiped }, 
 export default SwipeCard
 
 export function SwipeButton({ variant, onClick, ...props }) {
+  const t = useT()
   const isLike = variant === 'like'
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={isLike ? 'Like' : 'Pass'}
+      aria-label={isLike ? t('Like') : t('Pass')}
       className={`inline-flex h-14 w-14 items-center justify-center rounded-full border cursor-pointer transition-colors duration-200 ${
         isLike
           ? 'border-success/40 text-success hover:bg-success/10'

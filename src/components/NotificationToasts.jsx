@@ -3,15 +3,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Bell, ChatCircle, Heart, PersonSimpleRun } from '@phosphor-icons/react'
 import { useStore, findPersonById } from '../lib/store'
 import Avatar from './Avatar'
+import { useT, describeNotification } from '../lib/i18n'
 
 const ICON = { post_like: Heart, swipe_like: PersonSimpleRun, message: ChatCircle }
-
-function describe(notif, actorName) {
-  if (notif.type === 'post_like') return `${actorName} liked your post`
-  if (notif.type === 'swipe_like') return `${actorName} swiped right on you`
-  if (notif.type === 'message') return `${actorName}: ${notif.preview || 'sent you a message'}`
-  return `${actorName}`
-}
 
 function linkFor(notif) {
   if (notif.type === 'post_like' && notif.postId) return `/posts/${notif.postId}`
@@ -20,6 +14,7 @@ function linkFor(notif) {
 }
 
 function Toast({ notif }) {
+  const t = useT()
   const navigate = useNavigate()
   const actor = useStore((s) => findPersonById(s, notif.actorId))
   const dismissToast = useStore((s) => s.dismissToast)
@@ -46,11 +41,11 @@ function Toast({ notif }) {
         </span>
       </div>
       <p className="min-w-0 flex-1 truncate text-[13.5px] text-ink">
-        {describe(notif, actor?.name || 'Someone')}
+        {describeNotification(t, notif, actor?.name || t('Someone'))}
       </p>
       <button
         type="button"
-        aria-label="Dismiss"
+        aria-label={t('Dismiss')}
         onClick={(e) => {
           e.stopPropagation()
           dismissToast(notif.toastId)

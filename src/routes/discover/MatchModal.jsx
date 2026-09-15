@@ -3,8 +3,10 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import Button from '../../components/Button'
 import Avatar from '../../components/Avatar'
 import { useStore } from '../../lib/store'
+import { useT } from '../../lib/i18n'
 
 export default function MatchModal({ traveler, onClose }) {
+  const t = useT()
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const currentUser = useStore((s) => s.currentUser)
@@ -28,7 +30,7 @@ export default function MatchModal({ traveler, onClose }) {
             className="w-full max-w-sm rounded-3xl bg-bg-raised p-7 text-center"
           >
             <p className="text-[13px] font-medium uppercase tracking-wide text-accent-strong">
-              It's a match
+              {t("It's a match")}
             </p>
             <div className="mt-4 flex items-center justify-center">
               <Avatar
@@ -41,10 +43,10 @@ export default function MatchModal({ traveler, onClose }) {
               />
             </div>
             <h2 className="mt-4 text-xl font-semibold text-ink">
-              You and {traveler.name} matched
+              {t('You and {name} matched', { name: traveler.name })}
             </h2>
             <p className="mt-1.5 text-[14px] text-ink-muted">
-              Say hello, they're {traveler.distanceKm} km away right now.
+              {t("Say hello, they're {distance} km away right now.", { distance: traveler.distanceKm })}
             </p>
             <div className="mt-6 flex flex-col gap-2.5">
               <Button
@@ -54,10 +56,10 @@ export default function MatchModal({ traveler, onClose }) {
                   navigate(`/messages/match-${traveler.id}`)
                 }}
               >
-                Send a message
+                {t('Send a message')}
               </Button>
               <Button variant="ghost" className="w-full" onClick={onClose}>
-                Keep browsing
+                {t('Keep browsing')}
               </Button>
             </div>
           </motion.div>

@@ -14,6 +14,7 @@ import PostGrid from '../../components/PostGrid'
 import Avatar from '../../components/Avatar'
 import { useStore, findPersonById } from '../../lib/store'
 import { formatLocation } from '../../lib/formatLocation'
+import { useT } from '../../lib/i18n'
 
 const REPORT_REASONS = [
   { id: 'spam', label: 'Spam' },
@@ -161,6 +162,7 @@ function FlagMenu({ personId, personName, isBlocked }) {
 }
 
 export default function PersonProfile() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
@@ -245,7 +247,7 @@ export default function PersonProfile() {
         </div>
       ) : (
         <>
-          <p className="mt-1 text-[13.5px] text-ink-muted">{formatLocation(person)}</p>
+          <p className="mt-1 text-[13.5px] text-ink-muted">{formatLocation(t, person)}</p>
           {person.bio && <p className="mt-2 text-[14px] leading-relaxed text-ink">{person.bio}</p>}
 
           {hasThread && (

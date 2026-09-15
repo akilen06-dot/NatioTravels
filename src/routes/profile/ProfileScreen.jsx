@@ -5,6 +5,7 @@ import PostGrid from '../../components/PostGrid'
 import Avatar from '../../components/Avatar'
 import { useStore, isTripLocked, isTripCapped, tripPassExpiry } from '../../lib/store'
 import { formatLocation } from '../../lib/formatLocation'
+import { useT } from '../../lib/i18n'
 
 function daysLeft(expiry) {
   if (!expiry) return null
@@ -13,6 +14,7 @@ function daysLeft(expiry) {
 }
 
 export default function ProfileScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const signOut = useStore((s) => s.signOut)
@@ -35,21 +37,21 @@ export default function ProfileScreen() {
           <div className="flex gap-6">
             <div className="text-center">
               <p className="font-mono text-[17px] font-medium text-ink">{posts.length}</p>
-              <p className="text-[12px] text-ink-muted">Posts</p>
+              <p className="text-[12px] text-ink-muted">{t('Posts')}</p>
             </div>
             <div className="text-center">
               <p className="font-mono text-[17px] font-medium text-ink">{matches.length}</p>
-              <p className="text-[12px] text-ink-muted">Matches</p>
+              <p className="text-[12px] text-ink-muted">{t('Matches')}</p>
             </div>
             <div className="text-center">
               <p className="font-mono text-[17px] font-medium text-ink">{myGroupsCount}</p>
-              <p className="text-[12px] text-ink-muted">Groups</p>
+              <p className="text-[12px] text-ink-muted">{t('Groups')}</p>
             </div>
           </div>
         </div>
         <Link
           to="/profile/settings"
-          aria-label="Settings"
+          aria-label={t('Settings')}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
         >
           <GearSix size={20} />
@@ -63,11 +65,11 @@ export default function ProfileScreen() {
       {currentUser.username && (
         <p className="text-[13px] text-ink-faint">@{currentUser.username}</p>
       )}
-      <p className="mt-1 text-[13.5px] text-ink-muted">{formatLocation(currentUser)}</p>
+      <p className="mt-1 text-[13.5px] text-ink-muted">{formatLocation(t, currentUser)}</p>
       <p className="mt-2 text-[14px] leading-relaxed text-ink">{currentUser.bio}</p>
 
       <Button variant="secondary" size="sm" className="mt-4 w-full" onClick={() => navigate('/profile/edit')}>
-        Edit profile
+        {t('Edit profile')}
       </Button>
 
       <div className="mt-5 rounded-2xl border border-border bg-bg-raised p-5">
@@ -75,31 +77,34 @@ export default function ProfileScreen() {
           <>
             <div className="flex items-center justify-between">
               <p className="text-[14.5px] font-medium text-ink">
-                {currentUser.plan === 'subscription' ? 'Frequent Traveler' : 'Trip Pass'}
+                {currentUser.plan === 'subscription' ? t('Frequent Traveler') : t('Trip Pass')}
               </p>
               <span
                 className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${
                   locked ? 'bg-danger-tint text-danger' : 'bg-accent-tint text-accent-strong'
                 }`}
               >
-                {locked ? 'Expired' : 'Active'}
+                {locked ? t('Expired') : t('Active')}
               </span>
             </div>
             {currentUser.plan === 'subscription' ? (
               <p className="mt-1.5 text-[13px] text-ink-muted">
-                Billed {currentUser.billing === 'annual' ? 'yearly' : 'monthly'}. Unlimited trips.
+                {t('Billed {cadence}. Unlimited trips.', { cadence: currentUser.billing === 'annual' ? t('yearly') : t('monthly') })}
               </p>
             ) : (
               <>
                 <p className="mt-1.5 text-[13px] text-ink-muted">
                   {locked
-                    ? 'Your 14-day pass window has closed.'
-                    : `${remaining ?? 0} day${remaining === 1 ? '' : 's'} left on this pass.`}
+                    ? t('Your 14-day pass window has closed.')
+                    : (remaining ?? 0) === 1
+                      ? t('{n} day left on this pass.', { n: remaining ?? 0 })
+                      : t('{n} days left on this pass.', { n: remaining ?? 0 })}
                 </p>
                 {capped && !locked && (
                   <p className="mt-1 text-[12px] text-ink-faint">
-                    Your trip runs longer than 14 days. This pass covers only the first 14, from{' '}
-                    {new Date(currentUser.tripStart).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.
+                    {t('Your trip runs longer than 14 days. This pass covers only the first 14, from {date}.', {
+                      date: new Date(currentUser.tripStart).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    })}
                   </p>
                 )}
               </>
@@ -110,19 +115,19 @@ export default function ProfileScreen() {
               className="mt-4"
               onClick={() => navigate('/onboarding/plan')}
             >
-              {locked ? 'Renew plan' : 'Manage plan'}
+              {locked ? t('Renew plan') : t('Manage plan')}
             </Button>
           </>
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <p className="text-[14.5px] font-medium text-ink">No active plan</p>
+              <p className="text-[14.5px] font-medium text-ink">{t('No active plan')}</p>
               <span className="rounded-full bg-bg-sunken px-2.5 py-1 text-[12px] font-medium text-ink-muted">
-                Free
+                {t('Free')}
               </span>
             </div>
             <p className="mt-1.5 text-[13px] text-ink-muted">
-              You're browsing Natio without a Trip Pass or subscription. Add one whenever you're ready.
+              {t("You're browsing Natio without a Trip Pass or subscription. Add one whenever you're ready.")}
             </p>
             <Button
               variant="secondary"
@@ -130,7 +135,7 @@ export default function ProfileScreen() {
               className="mt-4"
               onClick={() => navigate('/onboarding/plan')}
             >
-              Add a plan
+              {t('Add a plan')}
             </Button>
           </>
         )}
@@ -140,7 +145,7 @@ export default function ProfileScreen() {
         <PostGrid
           posts={posts}
           onAddClick={() => navigate('/profile/new')}
-          emptyHint="Share a photo from your trip and it'll show up here."
+          emptyHint={t("Share a photo from your trip and it'll show up here.")}
         />
       </div>
 
@@ -149,7 +154,7 @@ export default function ProfileScreen() {
         onClick={() => signOut()}
         className="mt-8 text-[13.5px] font-medium text-ink-muted transition-colors duration-200 hover:text-danger cursor-pointer"
       >
-        Sign out
+        {t('Sign out')}
       </button>
     </div>
   )
