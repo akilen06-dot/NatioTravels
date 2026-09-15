@@ -178,7 +178,16 @@ export default function SignUp() {
                 rel="noopener noreferrer"
                 className="font-medium text-accent-strong underline underline-offset-2"
               >
-                Terms &amp; Privacy Policy
+                Terms
+              </Link>{' '}
+              &amp;{' '}
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-accent-strong underline underline-offset-2"
+              >
+                Privacy Policy
               </Link>
               .
             </span>

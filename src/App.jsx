@@ -3,6 +3,7 @@ import Landing from './routes/marketing/Landing'
 import About from './routes/marketing/About'
 import SafetyPolicy from './routes/marketing/SafetyPolicy'
 import Terms from './routes/marketing/Terms'
+import Privacy from './routes/marketing/Privacy'
 import Start from './routes/Start'
 import AuthChoice from './routes/auth/AuthChoice'
 import SignUp from './routes/auth/SignUp'
@@ -45,6 +46,7 @@ export default function App() {
       <Route path="/about" element={<About />} />
       <Route path="/safety" element={<SafetyPolicy />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
