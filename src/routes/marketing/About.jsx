@@ -75,12 +75,34 @@ export default function About() {
         </div>
 
         <h2 className="mt-14 text-[17px] font-semibold text-ink">Our Story</h2>
-        <p className="mt-4 text-[14.5px] leading-relaxed text-ink-muted">
-          Born on the vibrant, multicultural island of Mauritius, Natio Travels was inspired by
-          the modern nomadic lifestyle. We realized that no matter how far people travel, they
-          always look for a piece of home. Launched in 2026, we built a digital bridge that turns
-          unfamiliar foreign cities into welcoming spaces filled with familiar faces.
+        <p className="mt-3 text-[15px] font-medium leading-snug text-ink">
+          Born in Mauritius. Built for the world.
         </p>
+        <div className="mt-4 flex flex-col gap-4 text-[14.5px] leading-relaxed text-ink-muted">
+          <p>
+            Natio Travels didn&rsquo;t start in a corporate boardroom. It started on the
+            road—surrounded by new sights, foreign languages, and that sudden, undeniable wave of
+            homesickness.
+          </p>
+          <p>
+            We realized something simple: you can love exploring the world and still miss the
+            comfort of home. The easiest cure for feeling out of place isn&rsquo;t another tourist
+            attraction—it&rsquo;s finding someone who speaks your language, gets your jokes, and
+            shares your cultural wavelength.
+          </p>
+          <p>
+            So in 2026, we launched Natio Travels in Mauritius to solve a global problem: isolation
+            abroad.
+          </p>
+          <p>
+            Whether you&rsquo;re backpacking through Southeast Asia, moving across the world for
+            work, or living the digital nomad life, Natio is your direct line to fellow nationals.
+            We built it to make meeting people from back home as simple as opening an
+            app—turning quiet solo trips into shared meals, spontaneous meetups, and lifelong
+            friendships.
+          </p>
+          <p>Because wherever you land on the map, you shouldn&rsquo;t have to navigate it alone.</p>
+        </div>
       </div>
       <Footer />
     </div>
