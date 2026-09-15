@@ -1,6 +1,5 @@
 import Nav from './sections/Nav'
 import Footer from './sections/Footer'
-import { Warning } from '@phosphor-icons/react'
 
 function Section({ id, number, title, children }) {
   return (
@@ -24,14 +23,6 @@ export default function Terms() {
           Terms and Conditions
         </h1>
         <p className="mt-2 text-[13.5px] text-ink-faint">Last updated: August 31, 2026</p>
-
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-danger/30 bg-danger-tint p-5">
-          <Warning size={20} className="mt-0.5 shrink-0 text-danger" />
-          <p className="text-[13.5px] leading-relaxed text-ink">
-            This is a draft template, not a finished legal document — it still needs a lawyer's
-            review before it can actually bind anyone.
-          </p>
-        </div>
 
         <p className="mt-8 text-[14.5px] leading-relaxed text-ink-muted">
           Welcome to Natio Travels (the "App"). This Terms and Conditions agreement ("Agreement")
