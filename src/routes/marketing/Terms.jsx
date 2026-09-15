@@ -2,14 +2,6 @@ import Nav from './sections/Nav'
 import Footer from './sections/Footer'
 import { Warning } from '@phosphor-icons/react'
 
-function TodoField({ children }) {
-  return (
-    <span className="rounded bg-danger-tint px-1.5 py-0.5 font-medium text-danger">
-      {children}
-    </span>
-  )
-}
-
 function Section({ id, number, title, children }) {
   return (
     <section id={id} className="mt-10 first:mt-0 scroll-mt-24">
@@ -36,17 +28,15 @@ export default function Terms() {
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-danger/30 bg-danger-tint p-5">
           <Warning size={20} className="mt-0.5 shrink-0 text-danger" />
           <p className="text-[13.5px] leading-relaxed text-ink">
-            This is a draft template for the Natio Travels prototype, not a finished legal document. The
-            fields marked <TodoField>like this</TodoField> still need real information from you
-            (your registered company name and your governing-law jurisdiction), and the whole
-            document needs a lawyer's review before it can actually bind anyone.
+            This is a draft template, not a finished legal document — it still needs a lawyer's
+            review before it can actually bind anyone.
           </p>
         </div>
 
         <p className="mt-8 text-[14.5px] leading-relaxed text-ink-muted">
           Welcome to Natio Travels (the "App"). This Terms and Conditions agreement ("Agreement")
-          constitutes a legally binding contract between you ("User," "you," or "your") and{' '}
-          <TodoField>Insert Company Name</TodoField> ("Company," "we," "us," or "our"). By
+          constitutes a legally binding contract between you ("User," "you," or "your") and
+          Kabilen Ragavaloo, operating as Natio Travels ("Company," "we," "us," or "our"). By
           downloading, installing, accessing, or using the App, you agree to be bound by all of
           the terms contained herein. If you do not agree to these terms, you must immediately
           cease using the App and delete it from your device.
@@ -174,11 +164,10 @@ export default function Terms() {
 
         <Section number={7} title="Governing Law & Dispute Resolution">
           <p>
-            This Agreement shall be governed by and construed in accordance with the laws of{' '}
-            <TodoField>Insert Country/State</TodoField>, without regard to its conflict of law
-            provisions. Any legal action or proceeding arising under this Agreement will be
-            brought exclusively in the courts located in{' '}
-            <TodoField>Insert City/Jurisdiction</TodoField>.
+            This Agreement shall be governed by and construed in accordance with the laws of
+            Mauritius, without regard to its conflict of law provisions. Any legal action or
+            proceeding arising under this Agreement will be brought exclusively in the courts
+            located in Port Louis, Mauritius.
           </p>
         </Section>
       </div>
