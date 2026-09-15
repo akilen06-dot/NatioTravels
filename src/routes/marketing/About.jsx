@@ -1,25 +1,25 @@
-import { Compass, Heart, ShieldCheck } from '@phosphor-icons/react'
+import { Flag, Heart, UsersThree } from '@phosphor-icons/react'
 import Nav from './sections/Nav'
 import Footer from './sections/Footer'
 
 const values = [
   {
     icon: Heart,
-    title: 'Cultural Connection',
+    title: 'Shared Roots & Authentic Fun',
     tint: 'coral',
-    body: 'We believe the strongest bonds are built on shared roots, heritage, and home traditions.',
+    body: 'Exploring new places is exciting, but nothing beats the effortless comfort of shared humor, language, and culture. Connecting with people from home makes every journey richer.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Absolute Privacy',
+    icon: UsersThree,
+    title: 'Eradicating Isolation Abroad',
     tint: 'accent',
-    body: 'Your trust is our priority. We utilize smart backend matching while keeping your exact live location completely invisible to others.',
+    body: "Travel should expand your world, not isolate you. We're on a mission to cure homesickness and loneliness by making it seamless to build trusted, real-world friendships abroad.",
   },
   {
-    icon: Compass,
-    title: 'Safe Exploration',
+    icon: Flag,
+    title: 'Preserving Cultural Identity',
     tint: 'teal',
-    body: 'We cultivate a vetted, secure space so you can confidently expand your global network.',
+    body: 'Distance shouldn’t dim your heritage. We celebrate the shared values, traditions, and stories that keep global citizens connected to home — so no traveler ever has to walk alone.',
   },
 ]
 
@@ -38,16 +38,14 @@ export default function About() {
 
         <div className="mt-6 flex flex-col gap-4 text-[15px] leading-relaxed text-ink-muted">
           <p>
-            Natio Travels is a global networking platform founded in 2026 in Mauritius.
+            Founded in 2026 in Mauritius, Natio Travels is a global networking platform dedicated
+            to uniting travelers and expatriates with fellow countrymen anywhere in the world.
           </p>
           <p>
-            We bridge distances for global citizens by connecting travelers and expatriates from
-            the same nation while they are exploring or living abroad anywhere in the world.
-          </p>
-          <p>
-            Whether you are looking to share a meal, speak your native language, or navigate a
-            new culture with someone who understands home, our app safely brings fellow nationals
-            together.
+            We bridge distances for global citizens by transforming unfamiliar cities into
+            welcoming communities. Whether you want to share a traditional meal, speak your native
+            language, or explore a new destination with someone who understands your roots, Natio
+            safely brings fellow nationals together.
           </p>
         </div>
 
@@ -61,7 +59,7 @@ export default function About() {
           </p>
         </div>
 
-        <h2 className="mt-14 text-[17px] font-semibold text-ink">Core Values</h2>
+        <h2 className="mt-14 text-[17px] font-semibold text-ink">What We Believe In</h2>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {values.map((v) => (
             <div key={v.title} className="rounded-2xl border border-border bg-bg-raised p-6">
