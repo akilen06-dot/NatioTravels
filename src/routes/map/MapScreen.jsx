@@ -136,7 +136,11 @@ export default function MapScreen() {
           </div>
         ) : (
           <>
-            <div ref={mapContainerRef} className="absolute inset-0" />
+            {/* h-full/w-full, not absolute+inset-0: mapbox-gl.css forces
+                position:relative on this element (class .mapboxgl-map),
+                which silently cancels inset-based sizing and collapses it
+                to 0 height. Percentage sizing works under any position. */}
+            <div ref={mapContainerRef} className="h-full w-full" />
             {mapError ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg px-6 text-center">
                 <p className="text-[15px] font-medium text-ink">{t("Couldn't load the map")}</p>
