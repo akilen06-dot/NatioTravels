@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Landing from './routes/marketing/Landing'
 import About from './routes/marketing/About'
@@ -31,6 +32,10 @@ import EditProfile from './routes/profile/EditProfile'
 import PostDetail from './routes/profile/PostDetail'
 import PersonProfile from './routes/profile/PersonProfile'
 import SearchScreen from './routes/search/SearchScreen'
+// mapbox-gl alone is ~1.5MB — lazy-loaded so it's only ever fetched by
+// someone who actually opens the Map tab, not bundled into everyone's
+// initial page load.
+const MapScreen = lazy(() => import('./routes/map/MapScreen'))
 import SettingsHub from './routes/profile/settings/SettingsHub'
 import AccountSettings from './routes/profile/settings/AccountSettings'
 import ArchiveScreen from './routes/profile/settings/ArchiveScreen'
@@ -71,6 +76,14 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route path="/discover" element={<DiscoverScreen />} />
         <Route path="/search" element={<SearchScreen />} />
+        <Route
+          path="/map"
+          element={
+            <Suspense fallback={null}>
+              <MapScreen />
+            </Suspense>
+          }
+        />
         <Route path="/groups" element={<GroupsScreen />} />
         <Route path="/groups/new" element={<CreateGroup />} />
         <Route path="/groups/:id" element={<GroupDetail />} />

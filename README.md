@@ -23,6 +23,8 @@ npm run dev
     Webhook and Resend.
   - **Email verification** — a real confirmation email sent via Resend after signup; soft (never
     blocks access), shown as a banner until confirmed.
+  - **Map tab** — every discoverable traveler shown as pins on a real Mapbox map, using the same
+    fuzzed coordinates as Discover's distances.
 - **Live chat** — an open conversation updates the instant the other person replies, via Supabase
   Realtime, once a real backend is configured.
 - **Terms acceptance** — signup requires checking a box agreeing to the Terms & Privacy Policy

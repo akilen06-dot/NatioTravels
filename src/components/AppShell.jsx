@@ -5,6 +5,7 @@ import {
   SignOut,
   ChatCircleDots,
   MagnifyingGlass,
+  MapTrifold,
   UsersThree,
   UserCircle,
   Bell,
@@ -20,6 +21,7 @@ import { useT } from '../lib/i18n'
 const navItems = [
   { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/search', label: 'Search', icon: MagnifyingGlass },
+  { to: '/map', label: 'Map', icon: MapTrifold },
   { to: '/groups', label: 'Groups', icon: UsersThree },
   { to: '/messages', label: 'Messages', icon: ChatCircleDots },
   { to: '/notifications', label: 'Notifications', icon: Bell },

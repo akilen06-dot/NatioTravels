@@ -228,6 +228,27 @@ breaks.
 
 ---
 
+## Phase 6 — Map tab (Mapbox)
+
+Adds a "Map" tab showing every discoverable traveler of your nationality as pins on a real map,
+using the same fuzzed coordinates (never exact) already used for Discover's distances.
+
+1. Go to [mapbox.com](https://mapbox.com), create a free account — no credit card required for the
+   free tier (50,000 map loads/month).
+2. In the Mapbox dashboard, copy your **default public token** (starts with `pk.`), or create a new
+   one under **Tokens**.
+3. Add it to `.env.local`:
+   ```
+   VITE_MAPBOX_TOKEN=pk.your-token-here
+   ```
+4. Restart the dev server (or redeploy on Vercel — add the same variable there too), then open the
+   Map tab.
+
+Without a token set, the Map tab shows a friendly "Map isn't set up yet" message instead of a
+broken map — nothing else in the app is affected.
+
+---
+
 ## Report alerts (email you when someone gets reported)
 
 Right now, reports land in the `reports` table with nothing else happening — you'd only see one
