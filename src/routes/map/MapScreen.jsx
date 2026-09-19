@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -8,8 +8,23 @@ import { isMapboxConfigured, mapboxToken } from '../../lib/mapbox'
 import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
 
+// Colorful styles, not the muted grayscale ones — the map is the whole
+// point of this screen, so it should look lively rather than like a UI
+// backdrop.
 function styleForTheme(theme) {
-  return theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'
+  return theme === 'dark'
+    ? 'mapbox://styles/mapbox/navigation-night-v1'
+    : 'mapbox://styles/mapbox/streets-v12'
+}
+
+// A rotating palette so markers are visually distinct rather than one flat
+// color repeated everywhere — purely cosmetic, picked deterministically per
+// group so the same group always gets the same color.
+const PIN_COLORS = ['#f97316', '#ec4899', '#8b5cf6', '#06b6d4', '#22c55e', '#eab308']
+function colorForId(id) {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  return PIN_COLORS[hash % PIN_COLORS.length]
 }
 
 export default function MapScreen() {
@@ -18,15 +33,30 @@ export default function MapScreen() {
   const { theme } = useTheme()
   const currentUser = useStore((s) => s.currentUser)
   const travelers = useStore((s) => s.travelers)
+  const groups = useStore((s) => s.groups)
   const blockedIds = useStore((s) => s.blockedIds)
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef([])
   const [mapError, setMapError] = useState('')
 
-  // Same fuzzed coordinates already used for Discover's distance — never
-  // exact, matches the privacy design everywhere else in the app.
-  const located = travelers.filter((p) => p.lat != null && p.lng != null && !blockedIds.includes(p.id))
+  // Group meetups, not individual people — pinning exactly where a person
+  // is standing is a real safety risk (it tells anyone browsing precisely
+  // where to find them). A group's meetup is something people are already
+  // choosing to show up to publicly, so it doesn't carry that same risk.
+  // Position is still the same fuzzed, never-exact coordinate already used
+  // for Discover's distances (via the owner's profile) — approximate area
+  // only, same privacy design as everywhere else in the app.
+  const groupPins = useMemo(() => {
+    return groups
+      .filter((g) => !blockedIds.includes(g.ownerId))
+      .map((g) => {
+        const owner =
+          g.ownerId === currentUser?.id ? currentUser : travelers.find((p) => p.id === g.ownerId)
+        return owner?.lat != null && owner?.lng != null ? { ...g, lat: owner.lat, lng: owner.lng } : null
+      })
+      .filter(Boolean)
+  }, [groups, travelers, blockedIds, currentUser])
 
   useEffect(() => {
     if (!isMapboxConfigured || !mapContainerRef.current) return
@@ -89,18 +119,20 @@ export default function MapScreen() {
   useEffect(() => {
     if (!mapRef.current) return
     markersRef.current.forEach((marker) => marker.remove())
-    markersRef.current = located.map((person) => {
+    markersRef.current = groupPins.map((group) => {
       const el = document.createElement('button')
       el.type = 'button'
-      el.setAttribute('aria-label', person.name)
-      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);background-image:url(${person.photo || ''});background-size:cover;background-position:center;background-color:#d4d4d8;cursor:pointer;padding:0;`
-      el.addEventListener('click', () => navigate(`/people/${person.id}`))
-      return new mapboxgl.Marker({ element: el }).setLngLat([person.lng, person.lat]).addTo(mapRef.current)
+      el.setAttribute('aria-label', group.name)
+      el.title = `${group.name} · ${group.city}`
+      el.style.cssText = `width:38px;height:38px;border-radius:9999px;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.35);background:${colorForId(group.id)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;`
+      el.textContent = '👥'
+      el.addEventListener('click', () => navigate(`/groups/${group.id}`))
+      return new mapboxgl.Marker({ element: el }).setLngLat([group.lng, group.lat]).addTo(mapRef.current)
     })
     return () => {
       markersRef.current.forEach((marker) => marker.remove())
     }
-  }, [located, navigate])
+  }, [groupPins, navigate])
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -111,7 +143,7 @@ export default function MapScreen() {
     ) : (
       <TripLockedNotice
         title={t('Map is for paying travelers')}
-        body={t('Add a Trip Pass or subscription to see travelers of your nationality on a map.')}
+        body={t('Add a Trip Pass or subscription to see group meetups near you.')}
         ctaLabel={t('Add a plan to unlock')}
       />
     )
@@ -122,7 +154,7 @@ export default function MapScreen() {
       <div className="px-5 pt-8 pb-4 text-center">
         <h1 className="text-xl font-semibold text-ink">{t('Map')}</h1>
         <p className="mt-1 text-[13.5px] text-ink-muted">
-          {t('Travelers of your nationality, nearby right now.')}
+          {t('Group meetups happening near you.')}
         </p>
       </div>
 
@@ -150,10 +182,10 @@ export default function MapScreen() {
                 <p className="mt-3 max-w-xs break-words text-[11.5px] text-ink-faint">{mapError}</p>
               </div>
             ) : (
-              located.length === 0 && (
+              groupPins.length === 0 && (
                 <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center px-4">
                   <span className="rounded-full bg-bg-raised px-4 py-2 text-[13px] text-ink-muted shadow-sm">
-                    {t('No one to show on the map yet.')}
+                    {t('No groups happening on the map yet.')}
                   </span>
                 </div>
               )
