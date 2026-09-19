@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -22,6 +22,7 @@ export default function MapScreen() {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef([])
+  const [mapError, setMapError] = useState('')
 
   // Same fuzzed coordinates already used for Discover's distance — never
   // exact, matches the privacy design everywhere else in the app.
@@ -38,8 +39,31 @@ export default function MapScreen() {
       zoom: hasHome ? 11 : 1.5,
     })
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
+    // Mapbox fails completely silently by default (a bad/restricted token,
+    // a network block, etc. all just leave a blank container with no
+    // feedback) — surface it instead of leaving the screen looking broken.
+    map.on('error', (e) => {
+      const err = e?.error
+      console.error('Mapbox error:', err)
+      // Style/tile load failures come back as an AjaxError-like object
+      // (status/statusText), not a plain Error with .message.
+      const detail = err?.message || (err?.status ? `HTTP ${err.status} ${err.statusText || ''}`.trim() : 'Unknown error')
+      setMapError(detail)
+    })
     mapRef.current = map
+
+    // The container sits inside a flex layout (sized by its parent, not by
+    // its own content) — Mapbox measures it once at construction time via
+    // getBoundingClientRect(), and if that happens before the flex layout
+    // has settled to its final size, the map silently renders at 0x0 and
+    // never repaints on its own afterward. Watching for any size change and
+    // calling resize() covers both that race and later layout changes
+    // (sidebar toggling, window resize, etc).
+    const resizeObserver = new ResizeObserver(() => map.resize())
+    resizeObserver.observe(mapContainerRef.current)
+
     return () => {
+      resizeObserver.disconnect()
       map.remove()
       mapRef.current = null
     }
@@ -103,12 +127,22 @@ export default function MapScreen() {
         ) : (
           <>
             <div ref={mapContainerRef} className="absolute inset-0" />
-            {located.length === 0 && (
-              <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center px-4">
-                <span className="rounded-full bg-bg-raised px-4 py-2 text-[13px] text-ink-muted shadow-sm">
-                  {t('No one to show on the map yet.')}
-                </span>
+            {mapError ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg px-6 text-center">
+                <p className="text-[15px] font-medium text-ink">{t("Couldn't load the map")}</p>
+                <p className="mt-1.5 max-w-xs text-[13px] text-ink-muted">
+                  {t('Your Mapbox token was rejected. Check it’s a public token (starts with "pk."), not restricted to a different domain, and hasn’t been deleted.')}
+                </p>
+                <p className="mt-3 max-w-xs break-words text-[11.5px] text-ink-faint">{mapError}</p>
               </div>
+            ) : (
+              located.length === 0 && (
+                <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center px-4">
+                  <span className="rounded-full bg-bg-raised px-4 py-2 text-[13px] text-ink-muted shadow-sm">
+                    {t('No one to show on the map yet.')}
+                  </span>
+                </div>
+              )
             )}
           </>
         )}
