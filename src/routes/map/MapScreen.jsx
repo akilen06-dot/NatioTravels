@@ -72,7 +72,17 @@ export default function MapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const isInitialThemeSync = useRef(true)
   useEffect(() => {
+    // Skip the run that fires on mount alongside the map-creation effect
+    // above — the map is already built with this exact style, and calling
+    // setStyle() again immediately cancels that still-in-flight initial
+    // style request (confirmed via a cancelled network request), leaving
+    // the map with no style at all and a blank canvas.
+    if (isInitialThemeSync.current) {
+      isInitialThemeSync.current = false
+      return
+    }
     mapRef.current?.setStyle(styleForTheme(theme))
   }, [theme])
 
