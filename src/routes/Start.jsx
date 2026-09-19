@@ -2,8 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import Logo from '../components/Logo'
 import HeroScrollVideoReveal from '../components/HeroScrollVideoReveal'
+import { useT } from '../lib/i18n'
 
 export default function Start() {
+  const t = useT()
   const navigate = useNavigate()
 
   return (
@@ -14,16 +16,16 @@ export default function Start() {
 
       <div className="fixed right-5 top-5 z-30">
         <Button variant="invert" size="sm" onClick={() => navigate('/auth')}>
-          Start
+          {t('Start')}
         </Button>
       </div>
 
       <HeroScrollVideoReveal
         bottomText={
           <div className="flex flex-col items-center gap-8">
-            <span>Ready to meet your people?</span>
+            <span>{t('Ready to meet your people?')}</span>
             <Button size="lg" className="min-w-[200px]" onClick={() => navigate('/auth')}>
-              Start
+              {t('Start')}
             </Button>
           </div>
         }

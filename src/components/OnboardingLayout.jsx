@@ -1,6 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, X } from '@phosphor-icons/react'
 import Logo from './Logo'
+import { useT, languages } from '../lib/i18n'
+import { useStore } from '../lib/store'
+
+export function InlineLanguagePicker() {
+  const language = useStore((s) => s.language)
+  const setLanguage = useStore((s) => s.setLanguage)
+  return (
+    <select
+      value={language}
+      onChange={(e) => setLanguage(e.target.value)}
+      aria-label="Language"
+      className="h-8 rounded-full border border-border-strong bg-bg-raised px-2 text-[12px] font-medium text-ink-muted outline-none transition-colors duration-200 hover:text-ink cursor-pointer"
+    >
+      {languages.map((lang) => (
+        <option key={lang.code} value={lang.code}>
+          {lang.code.toUpperCase()}
+        </option>
+      ))}
+    </select>
+  )
+}
 
 export default function OnboardingLayout({
   step,
@@ -10,8 +31,9 @@ export default function OnboardingLayout({
   children,
   onBack,
   onSkip,
-  skipLabel = 'Skip',
+  skipLabel,
 }) {
+  const t = useT()
   const navigate = useNavigate()
 
   return (
@@ -20,7 +42,7 @@ export default function OnboardingLayout({
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate(-1))}
-          aria-label="Go back"
+          aria-label={t('Go back')}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
         >
           <ArrowLeft size={19} />
@@ -28,19 +50,20 @@ export default function OnboardingLayout({
         <Link to="/" className="flex items-center gap-2">
           <Logo size={24} />
         </Link>
-        {onSkip ? (
-          <button
-            type="button"
-            onClick={onSkip}
-            aria-label={skipLabel}
-            className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
-          >
-            {skipLabel}
-            <X size={16} weight="bold" />
-          </button>
-        ) : (
-          <div className="w-9" />
-        )}
+        <div className="flex items-center gap-2">
+          <InlineLanguagePicker />
+          {onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              aria-label={skipLabel ?? t('Skip')}
+              className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
+            >
+              {skipLabel ?? t('Skip')}
+              <X size={16} weight="bold" />
+            </button>
+          )}
+        </div>
       </header>
 
       {step && totalSteps && (

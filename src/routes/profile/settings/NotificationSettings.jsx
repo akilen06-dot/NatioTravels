@@ -2,16 +2,17 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from '@phosphor-icons/react'
 import Switch from '../../../components/Switch'
 import { useStore, DEFAULT_NOTIFICATION_PREFS } from '../../../lib/store'
-
-const ROWS = [
-  { key: 'matches', label: 'New matches', hint: 'When someone you liked matches back' },
-  { key: 'messages', label: 'Messages', hint: 'New messages from matches and groups' },
-  { key: 'groupActivity', label: 'Group activity', hint: 'Join requests, approvals, and updates' },
-  { key: 'meetupReminders', label: 'Meetup reminders', hint: 'Reminders before a group meetup starts' },
-  { key: 'marketing', label: 'Marketing & promotions', hint: 'Product news, offers, and tips' },
-]
+import { useT } from '../../../lib/i18n'
 
 export default function NotificationSettings() {
+  const t = useT()
+  const ROWS = [
+    { key: 'matches', label: t('New matches'), hint: t('When someone you liked matches back') },
+    { key: 'messages', label: t('Messages'), hint: t('New messages from matches and groups') },
+    { key: 'groupActivity', label: t('Group activity'), hint: t('Join requests, approvals, and updates') },
+    { key: 'meetupReminders', label: t('Meetup reminders'), hint: t('Reminders before a group meetup starts') },
+    { key: 'marketing', label: t('Marketing & promotions'), hint: t('Product news, offers, and tips') },
+  ]
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const setNotificationPref = useStore((s) => s.setNotificationPref)
@@ -25,12 +26,12 @@ export default function NotificationSettings() {
         className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
       >
         <ArrowLeft size={16} />
-        Settings
+        {t('Settings')}
       </button>
 
-      <h1 className="mt-4 text-xl font-semibold text-ink">Notifications</h1>
+      <h1 className="mt-4 text-xl font-semibold text-ink">{t('Notifications')}</h1>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-muted">
-        Choose what Natio can notify you about.
+        {t('Choose what Natio can notify you about.')}
       </p>
 
       <div className="mt-6 divide-y divide-border rounded-2xl border border-border bg-bg-raised px-5">

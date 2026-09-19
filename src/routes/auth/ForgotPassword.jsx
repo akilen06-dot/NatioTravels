@@ -6,8 +6,10 @@ import Field from '../../components/Field'
 import { fieldClasses } from '../../lib/fieldClasses'
 import Button from '../../components/Button'
 import { useStore } from '../../lib/store'
+import { useT } from '../../lib/i18n'
 
 export default function ForgotPassword() {
+  const t = useT()
   const navigate = useNavigate()
   const requestPasswordReset = useStore((s) => s.requestPasswordReset)
   const [email, setEmail] = useState('')
@@ -18,7 +20,7 @@ export default function ForgotPassword() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError('Enter a valid email address.')
+      setError(t('Enter a valid email address.'))
       return
     }
     setError('')
@@ -34,22 +36,21 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <OnboardingLayout title="Check your email">
+      <OnboardingLayout title={t('Check your email')}>
         <div className="flex flex-col items-center rounded-2xl border border-border bg-bg-sunken p-7 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-tint text-accent-strong">
             <EnvelopeSimple size={26} />
           </span>
           <p className="mt-4 text-[15px] font-medium text-ink">
-            If an account exists for {email}, we've sent a link to reset your password.
+            {t("If an account exists for {email}, we've sent a link to reset your password.", { email })}
           </p>
           {!sent.real && (
             <p className="mt-2 text-[12.5px] text-ink-faint">
-              Prototype mode: no real email was sent, since no backend is configured. Once
-              Supabase is set up (see SETUP.md), this sends a real email.
+              {t('Prototype mode: no real email was sent, since no backend is configured. Once Supabase is set up (see SETUP.md), this sends a real email.')}
             </p>
           )}
           <Button variant="secondary" size="sm" className="mt-5" onClick={() => navigate('/signin')}>
-            Back to sign in
+            {t('Back to sign in')}
           </Button>
         </div>
       </OnboardingLayout>
@@ -58,11 +59,11 @@ export default function ForgotPassword() {
 
   return (
     <OnboardingLayout
-      title="Reset your password"
-      subtitle="Enter the email on your account and we'll send you a link to reset your password."
+      title={t('Reset your password')}
+      subtitle={t("Enter the email on your account and we'll send you a link to reset your password.")}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Field label="Email" htmlFor="forgot-email" error={error}>
+        <Field label={t('Email')} htmlFor="forgot-email" error={error}>
           <input
             id="forgot-email"
             type="email"
@@ -78,7 +79,7 @@ export default function ForgotPassword() {
         </Field>
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? 'Sending…' : 'Send reset link'}
+          {submitting ? t('Sending…') : t('Send reset link')}
         </Button>
 
         <button
@@ -86,7 +87,7 @@ export default function ForgotPassword() {
           onClick={() => navigate('/signin')}
           className="text-center text-[13.5px] font-medium text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
         >
-          Back to sign in
+          {t('Back to sign in')}
         </button>
       </form>
     </OnboardingLayout>

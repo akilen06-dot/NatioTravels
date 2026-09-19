@@ -5,10 +5,9 @@ import { languages, useT } from '../../../lib/i18n'
 
 export default function LanguageSettings() {
   const navigate = useNavigate()
-  const currentUser = useStore((s) => s.currentUser)
+  const current = useStore((s) => s.language)
   const setLanguage = useStore((s) => s.setLanguage)
   const t = useT()
-  const current = currentUser.language || 'en'
 
   return (
     <div className="mx-auto max-w-lg px-5 py-8">
@@ -23,9 +22,9 @@ export default function LanguageSettings() {
 
       <h1 className="mt-4 text-xl font-semibold text-ink">{t('Language')}</h1>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-muted">
-        Natio automatically translates the app into your chosen language. This prototype
-        translates navigation and settings as a demo — full app-wide coverage would follow in a
-        real build.
+        {t(
+          'Natio translates the app into your chosen language across the core screens — Discover, Groups, Messages, Notifications, Search, Profile, Settings, and sign-up. A few detail screens are still being translated.',
+        )}
       </p>
 
       <div className="mt-6 divide-y divide-border rounded-2xl border border-border bg-bg-raised px-5">

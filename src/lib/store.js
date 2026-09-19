@@ -75,6 +75,12 @@ export const useStore = create(
   persist(
     (set, get) => ({
       auth: 'signed-out',
+      // Top-level (not on currentUser) so language switching works on
+      // signed-out screens too (Start, sign up, sign in, ...) — currentUser
+      // doesn't exist yet there. Synced from the account's saved language on
+      // sign-in, and carried into new signups so a language picked before
+      // signing up sticks.
+      language: 'en',
       draft: { ...initialDraft },
       currentUser: null,
       existingUsers: seedExistingUsers,
@@ -293,7 +299,7 @@ export const useStore = create(
         if (isBackendConfigured) {
           try {
             const profile = await profilesApi.signIn(identifier, password)
-            set({ currentUser: profile, auth: 'active', signInError: '' })
+            set({ currentUser: profile, auth: 'active', signInError: '', language: profile.language || 'en' })
             await get().hydrate()
             return true
           } catch (err) {
@@ -316,7 +322,7 @@ export const useStore = create(
           set({ signInError: 'Incorrect password. Try again.' })
           return false
         }
-        set({ currentUser: found, auth: 'active', signInError: '' })
+        set({ currentUser: found, auth: 'active', signInError: '', language: found.language || 'en' })
         return true
       },
 
@@ -327,7 +333,7 @@ export const useStore = create(
 
       choosePlanAndFinish: async (plan, billing) => {
         if (isBackendConfigured) {
-          const draft = { ...get().draft, plan, billing: plan === 'subscription' ? billing : null }
+          const draft = { ...get().draft, plan, billing: plan === 'subscription' ? billing : null, language: get().language }
           const profile = await profilesApi.signUp(draft)
           set((s) => ({
             currentUser: profile,
@@ -355,7 +361,7 @@ export const useStore = create(
           bio: 'New here, say hi!',
           verified: true,
           private: false,
-          language: 'en',
+          language: get().language,
           notificationPrefs: { ...DEFAULT_NOTIFICATION_PREFS },
           devicePermissions: { ...DEFAULT_DEVICE_PERMISSIONS },
           adPreferences: { ...DEFAULT_AD_PREFERENCES },
@@ -375,7 +381,7 @@ export const useStore = create(
 
       skipPlanAndFinish: async () => {
         if (isBackendConfigured) {
-          const draft = { ...get().draft, plan: null, billing: null }
+          const draft = { ...get().draft, plan: null, billing: null, language: get().language }
           const profile = await profilesApi.signUp(draft)
           set({ currentUser: profile, auth: 'active', draft: { ...initialDraft } })
           await get().hydrate()
@@ -398,7 +404,7 @@ export const useStore = create(
           bio: 'New here, say hi!',
           verified: true,
           private: false,
-          language: 'en',
+          language: get().language,
           notificationPrefs: { ...DEFAULT_NOTIFICATION_PREFS },
           devicePermissions: { ...DEFAULT_DEVICE_PERMISSIONS },
           adPreferences: { ...DEFAULT_AD_PREFERENCES },
@@ -546,7 +552,10 @@ export const useStore = create(
 
       setAccountPrivacy: (isPrivate) => get().updateCurrentUser({ private: isPrivate }),
 
-      setLanguage: (language) => get().updateCurrentUser({ language }),
+      setLanguage: (language) => {
+        set({ language })
+        if (get().currentUser) get().updateCurrentUser({ language })
+      },
 
       setNotificationPref: (key, value) => {
         const current = get().currentUser

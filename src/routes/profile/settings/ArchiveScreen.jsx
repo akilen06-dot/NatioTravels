@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Sparkle } from '@phosphor-icons/react'
 import { useStore } from '../../../lib/store'
+import { useT } from '../../../lib/i18n'
 
 export default function ArchiveScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const allPosts = useStore((s) => s.posts)
@@ -17,12 +19,12 @@ export default function ArchiveScreen() {
         className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
       >
         <ArrowLeft size={16} />
-        Settings
+        {t('Settings')}
       </button>
 
-      <h1 className="mt-4 text-xl font-semibold text-ink">Archive</h1>
+      <h1 className="mt-4 text-xl font-semibold text-ink">{t('Archive')}</h1>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-muted">
-        Archived pictures are hidden from your profile, but not deleted. Only you can see this.
+        {t('Archived pictures are hidden from your profile, but not deleted. Only you can see this.')}
       </p>
 
       {archived.length === 0 ? (
@@ -30,9 +32,9 @@ export default function ArchiveScreen() {
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-bg-sunken text-ink-faint">
             <Sparkle size={24} />
           </span>
-          <p className="mt-4 text-[14.5px] font-medium text-ink">Nothing archived yet</p>
+          <p className="mt-4 text-[14.5px] font-medium text-ink">{t('Nothing archived yet')}</p>
           <p className="mt-1 max-w-[240px] text-[13px] text-ink-muted">
-            Archive a picture from its detail view and it'll show up here.
+            {t("Archive a picture from its detail view and it'll show up here.")}
           </p>
         </div>
       ) : (
@@ -45,7 +47,7 @@ export default function ArchiveScreen() {
                 onClick={() => unarchivePost(post.id)}
                 className="absolute inset-x-1.5 bottom-1.5 rounded-lg bg-black/60 px-2 py-1.5 text-[11px] font-medium text-white backdrop-blur-sm transition-colors duration-200 hover:bg-black/75 cursor-pointer"
               >
-                Unarchive
+                {t('Unarchive')}
               </button>
             </div>
           ))}

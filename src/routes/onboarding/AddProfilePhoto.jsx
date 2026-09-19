@@ -5,8 +5,10 @@ import OnboardingLayout from '../../components/OnboardingLayout'
 import Button from '../../components/Button'
 import { useStore } from '../../lib/store'
 import { readAndResizeImage } from '../../lib/imageFile'
+import { useT } from '../../lib/i18n'
 
 export default function AddProfilePhoto() {
+  const t = useT()
   const navigate = useNavigate()
   const draft = useStore((s) => s.draft)
   const setDraftField = useStore((s) => s.setDraftField)
@@ -24,7 +26,7 @@ export default function AddProfilePhoto() {
       const dataUrl = await readAndResizeImage(file, { maxDim: 500, quality: 0.85 })
       setDraftField('photo', dataUrl)
     } catch (err) {
-      setError(err.message || "Couldn't use that photo. Try another one.")
+      setError(err.message || t("Couldn't use that photo. Try another one."))
     } finally {
       setLoadingUpload(false)
     }
@@ -38,10 +40,10 @@ export default function AddProfilePhoto() {
     <OnboardingLayout
       step={4}
       totalSteps={4}
-      title="Add a profile photo"
-      subtitle="Help other travelers recognize you. You can always change this later."
+      title={t('Add a profile photo')}
+      subtitle={t('Help other travelers recognize you. You can always change this later.')}
       onSkip={handleContinue}
-      skipLabel="Skip for now"
+      skipLabel={t('Skip for now')}
     >
       <input
         ref={fileInputRef}
@@ -69,7 +71,7 @@ export default function AddProfilePhoto() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={loadingUpload}
-            aria-label={draft.photo ? 'Change photo' : 'Add photo'}
+            aria-label={draft.photo ? t('Change photo') : t('Add photo')}
             className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-accent-strong text-white shadow-md transition-colors duration-200 hover:bg-accent-strong/90 disabled:opacity-60 cursor-pointer"
           >
             <Camera size={16} weight="fill" />
@@ -81,13 +83,13 @@ export default function AddProfilePhoto() {
           disabled={loadingUpload}
           className="mt-4 text-[13.5px] font-medium text-accent-strong cursor-pointer disabled:opacity-60"
         >
-          {draft.photo ? 'Choose a different photo' : 'Upload from your gallery'}
+          {draft.photo ? t('Choose a different photo') : t('Upload from your gallery')}
         </button>
         {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
       </div>
 
       <Button size="lg" className="mt-10 w-full" onClick={handleContinue} disabled={loadingUpload}>
-        Continue
+        {t('Continue')}
       </Button>
     </OnboardingLayout>
   )

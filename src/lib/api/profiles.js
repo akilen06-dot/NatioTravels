@@ -101,6 +101,7 @@ export async function signUp(draft) {
       billing: draft.plan === 'subscription' ? draft.billing : null,
       trip_start: draft.tripStart || null,
       trip_end: draft.tripEnd || null,
+      language: draft.language || 'en',
     })
     .select()
     .single()

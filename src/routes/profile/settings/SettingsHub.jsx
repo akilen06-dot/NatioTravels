@@ -51,49 +51,49 @@ export default function SettingsHub() {
         <SettingsRow
           icon={UserCircle}
           label={t('Account')}
-          hint="Password, ads, billing"
+          hint={t('Password, ads, billing')}
           onClick={() => navigate('/profile/settings/account')}
         />
       </Section>
 
-      <Section title="Content & privacy">
+      <Section title={t('Content & privacy')}>
         <SettingsRow
           icon={Sparkle}
           label={t('Archive')}
-          hint="Pictures you've hidden from your profile"
+          hint={t("Pictures you've hidden from your profile")}
           onClick={() => navigate('/profile/settings/archive')}
         />
         <SettingsRow
           icon={LockKey}
           label={t('Account privacy')}
-          hint="Control who can view your profile"
+          hint={t('Control who can view your profile')}
           onClick={() => navigate('/profile/settings/privacy')}
         />
         <SettingsRow
           icon={Flag}
           label={t('Blocked & reported')}
-          hint="People you've blocked or reported"
+          hint={t("People you've blocked or reported")}
           onClick={() => navigate('/profile/settings/blocked')}
         />
       </Section>
 
-      <Section title="Preferences">
+      <Section title={t('Preferences')}>
         <SettingsRow
           icon={Bell}
           label={t('Notifications')}
-          hint="Choose what Natio notifies you about"
+          hint={t('Choose what Natio notifies you about')}
           onClick={() => navigate('/profile/settings/notifications')}
         />
         <SettingsRow
           icon={DeviceMobile}
           label={t('Device permissions')}
-          hint="Location, camera, and notifications"
+          hint={t('Location, camera, and notifications')}
           onClick={() => navigate('/profile/settings/devices')}
         />
         <SettingsRow
           icon={Globe}
           label={t('Language')}
-          hint="Translate the app automatically"
+          hint={t('Translate the app automatically')}
           onClick={() => navigate('/profile/settings/language')}
         />
       </Section>
@@ -102,13 +102,13 @@ export default function SettingsHub() {
         <SettingsRow
           icon={Ticket}
           label={t('Plan')}
-          hint="View or change your plan"
+          hint={t('View or change your plan')}
           onClick={() => navigate('/onboarding/plan')}
         />
         <SettingsRow
           icon={ShieldCheck}
           label={t('Safety & privacy')}
-          hint="How Natio keeps you safe"
+          hint={t('How Natio keeps you safe')}
           onClick={() => navigate('/profile/safety')}
         />
         <SettingsRow icon={SignOut} label={t('Sign out')} danger onClick={() => signOut()} />

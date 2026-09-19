@@ -2,14 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bell, Camera, MapPinLine } from '@phosphor-icons/react'
 import Switch from '../../../components/Switch'
 import { useStore, DEFAULT_DEVICE_PERMISSIONS } from '../../../lib/store'
-
-const ROWS = [
-  { key: 'location', icon: MapPinLine, label: 'Location', hint: 'Needed to match you with nearby travelers' },
-  { key: 'camera', icon: Camera, label: 'Camera', hint: 'Used for ID verification' },
-  { key: 'notifications', icon: Bell, label: 'Push notifications', hint: 'Alerts for matches, messages, and meetups' },
-]
+import { useT } from '../../../lib/i18n'
 
 export default function DevicePermissions() {
+  const t = useT()
+  const ROWS = [
+    { key: 'location', icon: MapPinLine, label: t('Location'), hint: t('Needed to match you with nearby travelers') },
+    { key: 'camera', icon: Camera, label: t('Camera'), hint: t('Used for ID verification') },
+    { key: 'notifications', icon: Bell, label: t('Push notifications'), hint: t('Alerts for matches, messages, and meetups') },
+  ]
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const setDevicePermission = useStore((s) => s.setDevicePermission)
@@ -23,13 +24,12 @@ export default function DevicePermissions() {
         className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
       >
         <ArrowLeft size={16} />
-        Settings
+        {t('Settings')}
       </button>
 
-      <h1 className="mt-4 text-xl font-semibold text-ink">Device permissions</h1>
+      <h1 className="mt-4 text-xl font-semibold text-ink">{t('Device permissions')}</h1>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-muted">
-        These mirror the permissions your phone or browser grants Natio. Turning one off here is a
-        prototype toggle — on a real device you'd also need to update it in your system settings.
+        {t("These mirror the permissions your phone or browser grants Natio. Turning one off here is a prototype toggle — on a real device you'd also need to update it in your system settings.")}
       </p>
 
       <div className="mt-6 divide-y divide-border rounded-2xl border border-border bg-bg-raised px-5">

@@ -11,15 +11,9 @@ import { useStore } from '../../lib/store'
 import { isBackendConfigured } from '../../lib/supabaseClient'
 import { isPaddleConfigured, createPaddleTransaction } from '../../lib/api/billing'
 import { openPaddleCheckout } from '../../lib/paddle'
+import { useT } from '../../lib/i18n'
 
 const useRealCheckout = isBackendConfigured && isPaddleConfigured
-
-const paymentMethods = [
-  { id: 'card', label: 'Card' },
-  { id: 'applepay', label: 'Apple Pay' },
-  { id: 'googlepay', label: 'Google Pay' },
-  { id: 'paypal', label: 'PayPal' },
-]
 
 function formatExpiry(raw) {
   const digits = raw.replace(/\D/g, '').slice(0, 4)
@@ -27,18 +21,26 @@ function formatExpiry(raw) {
   return digits
 }
 
-function expiryError(value) {
-  const match = /^(\d{2})\/(\d{2})$/.exec(value)
-  if (!match) return 'Enter a valid expiry date (MM/YY).'
-  const month = parseInt(match[1], 10)
-  const year = 2000 + parseInt(match[2], 10)
-  if (month < 1 || month > 12) return 'Enter a valid month.'
-  const validThrough = new Date(year, month, 0, 23, 59, 59, 999)
-  if (validThrough < new Date()) return 'This card has expired.'
-  return ''
-}
-
 export default function PlanSelect() {
+  const t = useT()
+  const paymentMethods = [
+    { id: 'card', label: t('Card') },
+    { id: 'applepay', label: t('Apple Pay') },
+    { id: 'googlepay', label: t('Google Pay') },
+    { id: 'paypal', label: t('PayPal') },
+  ]
+
+  function expiryError(value) {
+    const match = /^(\d{2})\/(\d{2})$/.exec(value)
+    if (!match) return t('Enter a valid expiry date (MM/YY).')
+    const month = parseInt(match[1], 10)
+    const year = 2000 + parseInt(match[2], 10)
+    if (month < 1 || month > 12) return t('Enter a valid month.')
+    const validThrough = new Date(year, month, 0, 23, 59, 59, 999)
+    if (validThrough < new Date()) return t('This card has expired.')
+    return ''
+  }
+
   const navigate = useNavigate()
   const auth = useStore((s) => s.auth)
   const draft = useStore((s) => s.draft)
@@ -89,7 +91,7 @@ export default function PlanSelect() {
       }
       navigate('/discover')
     } catch (err) {
-      setSubmitError(err.message || 'Something went wrong. Try again.')
+      setSubmitError(err.message || t('Something went wrong. Try again.'))
     } finally {
       setSubmitting(false)
     }
@@ -98,17 +100,17 @@ export default function PlanSelect() {
   function validateTrip() {
     if (isRenewal) return true
     if (!tripStart || !tripEnd) {
-      setTripError('Add both an arrival and a departure date.')
+      setTripError(t('Add both an arrival and a departure date.'))
       return false
     }
     if (new Date(tripEnd) <= new Date(tripStart)) {
-      setTripError('Your departure date should be after your arrival date.')
+      setTripError(t('Your departure date should be after your arrival date.'))
       return false
     }
     const days = Math.round((new Date(tripEnd) - new Date(tripStart)) / (1000 * 60 * 60 * 24))
     if (plan === 'trip' && days > 14) {
       setTripError(
-        "Your trip is longer than 14 days, so a Trip Pass won't cover it. Choose Frequent Traveler, or shorten your trip.",
+        t("Your trip is longer than 14 days, so a Trip Pass won't cover it. Choose Frequent Traveler, or shorten your trip."),
       )
       return false
     }
@@ -121,10 +123,10 @@ export default function PlanSelect() {
     e.preventDefault()
     if (!validateTrip()) return
     const next = {}
-    if (card.replace(/\D/g, '').length < 12) next.card = 'Enter a valid card number.'
+    if (card.replace(/\D/g, '').length < 12) next.card = t('Enter a valid card number.')
     const expErr = expiryError(expiry)
     if (expErr) next.expiry = expErr
-    if (!/^\d{3,4}$/.test(cvc)) next.cvc = 'Enter a valid CVC.'
+    if (!/^\d{3,4}$/.test(cvc)) next.cvc = t('Enter a valid CVC.')
     setErrors(next)
     if (Object.keys(next).length) return
     completePayment()
@@ -142,7 +144,7 @@ export default function PlanSelect() {
       await skipPlanAndFinish()
       navigate('/discover')
     } catch (err) {
-      setSubmitError(err.message || 'Something went wrong. Try again.')
+      setSubmitError(err.message || t('Something went wrong. Try again.'))
     } finally {
       setSubmitting(false)
     }
@@ -157,18 +159,18 @@ export default function PlanSelect() {
   const tripExceeds14Days = !isRenewal && tripLengthDays !== null && tripLengthDays > 14
 
   const dueNow = plan === 'trip' ? '$9.99' : billing === 'annual' ? '$142.99' : '$16.99'
-  const dueCadence = plan === 'trip' ? 'one time' : billing === 'annual' ? 'billed yearly' : 'billed monthly'
+  const dueCadence = plan === 'trip' ? t('one time') : billing === 'annual' ? t('billed yearly') : t('billed monthly')
 
   return (
     <OnboardingLayout
-      title="Choose your plan"
-      subtitle={isRenewal ? 'Pick what fits how you travel.' : 'Add your trip dates, then pick a plan.'}
+      title={t('Choose your plan')}
+      subtitle={isRenewal ? t('Pick what fits how you travel.') : t('Add your trip dates, then pick a plan.')}
       onSkip={!isRenewal ? skipForNow : undefined}
-      skipLabel="Skip for now"
+      skipLabel={t('Skip for now')}
     >
       {!isRenewal && (
         <div className="mb-7 flex flex-col gap-5">
-          <Field label="Arrival date" htmlFor="trip-start">
+          <Field label={t('Arrival date')} htmlFor="trip-start">
             <DatePicker
               id="trip-start"
               value={tripStart}
@@ -177,10 +179,10 @@ export default function PlanSelect() {
                 setTripError('')
                 if (tripEnd && new Date(tripEnd) <= new Date(next)) setTripEnd('')
               }}
-              placeholder="When do you arrive?"
+              placeholder={t('When do you arrive?')}
             />
           </Field>
-          <Field label="Departure date" htmlFor="trip-end" error={tripError}>
+          <Field label={t('Departure date')} htmlFor="trip-end" error={tripError}>
             <DatePicker
               id="trip-end"
               value={tripEnd}
@@ -188,7 +190,7 @@ export default function PlanSelect() {
                 setTripEnd(next)
                 setTripError('')
               }}
-              placeholder="When do you leave?"
+              placeholder={t('When do you leave?')}
               error={!!tripError}
               disabledMatcher={tripStart ? { before: addDays(parseISO(tripStart), 1) } : undefined}
               defaultMonth={tripStart ? parseISO(tripStart) : undefined}
@@ -206,14 +208,13 @@ export default function PlanSelect() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[15px] font-medium text-ink">Trip Pass</span>
+            <span className="text-[15px] font-medium text-ink">{t('Trip Pass')}</span>
             <span className="font-mono text-lg font-medium text-ink">$9.99</span>
           </div>
-          <p className="mt-1 text-[13px] text-ink-muted">Up to 14 days, then it ends on its own.</p>
+          <p className="mt-1 text-[13px] text-ink-muted">{t('Up to 14 days, then it ends on its own.')}</p>
           {tripExceeds14Days && plan === 'trip' && (
             <p className="mt-3 rounded-lg bg-danger-tint px-3 py-2 text-[12.5px] leading-relaxed text-danger">
-              Your trip is {tripLengthDays} days. This pass still expires 14 days after you
-              arrive, not at the end of your trip. Frequent Traveler covers the whole thing.
+              {t('Your trip is {days} days. This pass still expires 14 days after you arrive, not at the end of your trip. Frequent Traveler covers the whole thing.', { days: tripLengthDays })}
             </p>
           )}
         </button>
@@ -226,13 +227,13 @@ export default function PlanSelect() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[15px] font-medium text-ink">Frequent Traveler</span>
+            <span className="text-[15px] font-medium text-ink">{t('Frequent Traveler')}</span>
             <span className="font-mono text-lg font-medium text-ink">
               ${billing === 'annual' ? annualMonthly : '16.99'}
               <span className="text-[12px] text-ink-muted">/mo</span>
             </span>
           </div>
-          <p className="mt-1 text-[13px] text-ink-muted">Unlimited trips, no per-trip fees.</p>
+          <p className="mt-1 text-[13px] text-ink-muted">{t('Unlimited trips, no per-trip fees.')}</p>
 
           {plan === 'subscription' && (
             <div className="mt-3 flex w-fit items-center gap-1 rounded-full border border-border bg-bg-raised p-1 text-[12.5px]">
@@ -245,7 +246,7 @@ export default function PlanSelect() {
                 }}
                 className={`rounded-full px-2.5 py-1 cursor-pointer ${billing === 'monthly' ? 'bg-bg-sunken text-ink' : 'text-ink-muted'}`}
               >
-                Monthly
+                {t('Monthly')}
               </span>
               <span
                 role="button"
@@ -256,7 +257,7 @@ export default function PlanSelect() {
                 }}
                 className={`rounded-full px-2.5 py-1 cursor-pointer ${billing === 'annual' ? 'bg-bg-sunken text-ink' : 'text-ink-muted'}`}
               >
-                Annual, save 30%
+                {t('Annual, save 30%')}
               </span>
             </div>
           )}
@@ -264,7 +265,7 @@ export default function PlanSelect() {
       </div>
 
       <div className="mt-7 flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="text-[13.5px] text-ink-muted">Due now</span>
+        <span className="text-[13.5px] text-ink-muted">{t('Due now')}</span>
         <span className="font-mono text-[15px] font-medium text-ink">
           {dueNow} <span className="font-sans text-[12px] text-ink-muted">{dueCadence}</span>
         </span>
@@ -284,7 +285,7 @@ export default function PlanSelect() {
           onClick={completePayment}
         >
           <Check size={18} weight="bold" />
-          {submitting ? 'Opening checkout…' : 'Continue to checkout'}
+          {submitting ? t('Opening checkout…') : t('Continue to checkout')}
         </Button>
       ) : (
         <>
@@ -307,7 +308,7 @@ export default function PlanSelect() {
 
       {method === 'card' ? (
         <form onSubmit={handleCardPay} className="mt-5 flex flex-col gap-5">
-          <Field label="Card number" htmlFor="card" error={errors.card}>
+          <Field label={t('Card number')} htmlFor="card" error={errors.card}>
             <div className="relative">
               <CreditCard size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint" />
               <input
@@ -321,7 +322,7 @@ export default function PlanSelect() {
             </div>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Expiry" htmlFor="exp" error={errors.expiry}>
+            <Field label={t('Expiry')} htmlFor="exp" error={errors.expiry}>
               <input
                 id="exp"
                 inputMode="numeric"
@@ -332,7 +333,7 @@ export default function PlanSelect() {
                 className={fieldClasses(!!errors.expiry)}
               />
             </Field>
-            <Field label="CVC" htmlFor="cvc" error={errors.cvc}>
+            <Field label={t('CVC')} htmlFor="cvc" error={errors.cvc}>
               <input
                 id="cvc"
                 inputMode="numeric"
@@ -347,12 +348,12 @@ export default function PlanSelect() {
           <Button type="submit" size="lg" className="w-full" disabled={submitting}>
             <Check size={18} weight="bold" />
             {submitting
-              ? 'Processing…'
+              ? t('Processing…')
               : plan === 'trip'
                 ? isRenewal
-                  ? 'Pay $9.99 and renew'
-                  : 'Pay $9.99 and enter Natio'
-                : 'Start subscription'}
+                  ? t('Pay $9.99 and renew')
+                  : t('Pay $9.99 and enter Natio')
+                : t('Start subscription')}
           </Button>
         </form>
       ) : (
@@ -365,7 +366,7 @@ export default function PlanSelect() {
               className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-white transition-opacity duration-200 hover:opacity-90 cursor-pointer"
             >
               <img src="https://cdn.simpleicons.org/apple/ffffff" alt="" className="h-5 w-5" />
-              <span className="text-[16px] font-medium">Pay</span>
+              <span className="text-[16px] font-medium">{t('Pay')}</span>
             </button>
           )}
           {method === 'googlepay' && (
@@ -376,7 +377,7 @@ export default function PlanSelect() {
               className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-border-strong bg-white text-black transition-colors duration-200 hover:bg-zinc-50 cursor-pointer"
             >
               <img src="https://cdn.simpleicons.org/googlepay/000000" alt="" className="h-5 w-5" />
-              <span className="text-[16px] font-medium">Pay</span>
+              <span className="text-[16px] font-medium">{t('Pay')}</span>
             </button>
           )}
           {method === 'paypal' && (
@@ -387,7 +388,7 @@ export default function PlanSelect() {
               className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#0070BA] text-white transition-opacity duration-200 hover:opacity-90 cursor-pointer"
             >
               <img src="https://cdn.simpleicons.org/paypal/ffffff" alt="" className="h-5 w-5" />
-              <span className="text-[16px] font-medium">PayPal</span>
+              <span className="text-[16px] font-medium">{t('PayPal')}</span>
             </button>
           )}
         </div>
@@ -397,18 +398,18 @@ export default function PlanSelect() {
 
       <p className="mt-4 text-center text-[12px] text-ink-faint">
         {useRealCheckout
-          ? "You'll enter your card on Paddle's secure checkout."
-          : 'Prototype checkout. No real payment is processed.'}
+          ? t("You'll enter your card on Paddle's secure checkout.")
+          : t('Prototype checkout. No real payment is processed.')}
       </p>
       <p className="mt-2 text-center text-[12px] text-ink-faint">
-        By paying, you agree to our{' '}
+        {t('By paying, you agree to our')}{' '}
         <Link
           to="/terms#fees-and-billing"
           target="_blank"
           rel="noopener noreferrer"
           className="underline underline-offset-2 hover:text-ink-muted"
         >
-          Terms
+          {t('Terms')}
         </Link>
         .
       </p>
@@ -419,7 +420,7 @@ export default function PlanSelect() {
           onClick={skipForNow}
           className="mt-5 w-full text-center text-[13px] font-medium text-ink-muted underline underline-offset-2 transition-colors duration-200 hover:text-ink cursor-pointer"
         >
-          Skip for now — you can add a plan anytime from your profile
+          {t('Skip for now — you can add a plan anytime from your profile')}
         </button>
       )}
     </OnboardingLayout>

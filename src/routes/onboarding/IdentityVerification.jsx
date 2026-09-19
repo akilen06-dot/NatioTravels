@@ -8,6 +8,7 @@ import Button from '../../components/Button'
 import CameraCapture from '../../components/CameraCapture'
 import { useStore } from '../../lib/store'
 import { readAndResizeImage } from '../../lib/imageFile'
+import { useT } from '../../lib/i18n'
 
 const currentYear = new Date().getFullYear()
 
@@ -23,6 +24,7 @@ function ageFromDob(dob) {
 }
 
 export default function IdentityVerification() {
+  const t = useT()
   const navigate = useNavigate()
   const draft = useStore((s) => s.draft)
   const setDraftField = useStore((s) => s.setDraftField)
@@ -61,7 +63,7 @@ export default function IdentityVerification() {
       const dataUrl = await readAndResizeImage(file, { maxDim: 900, quality: 0.85 })
       setDraftField('idPhoto', dataUrl)
     } catch (err) {
-      setCameraError(err.message || "Couldn't use that photo. Try another one.")
+      setCameraError(err.message || t("Couldn't use that photo. Try another one."))
     } finally {
       setMode('idle')
     }
@@ -71,14 +73,14 @@ export default function IdentityVerification() {
     <OnboardingLayout
       step={3}
       totalSteps={4}
-      title="Verify your identity"
-      subtitle="A passport or ID photo confirms you're a real, matching traveler before you can message anyone."
+      title={t('Verify your identity')}
+      subtitle={t("A passport or ID photo confirms you're a real, matching traveler before you can message anyone.")}
     >
       <div className="flex flex-col gap-6">
         <Field
-          label="Date of birth"
+          label={t('Date of birth')}
           htmlFor="dob"
-          error={underage ? 'You must be 18 or older to use Natio.' : undefined}
+          error={underage ? t('You must be 18 or older to use Natio.') : undefined}
         >
           <DatePicker
             id="dob"
@@ -87,7 +89,7 @@ export default function IdentityVerification() {
               setDob(next)
               setTouchedDob(true)
             }}
-            placeholder="Select your date of birth"
+            placeholder={t('Select your date of birth')}
             error={underage}
             captionLayout="dropdown"
             fromYear={currentYear - 100}
@@ -98,7 +100,7 @@ export default function IdentityVerification() {
         </Field>
 
         <div>
-          <p className="text-[13.5px] font-medium text-ink">Passport or ID photo</p>
+          <p className="text-[13.5px] font-medium text-ink">{t('Passport or ID photo')}</p>
 
           <input
             ref={fileInputRef}
@@ -115,7 +117,7 @@ export default function IdentityVerification() {
                   ref={cameraRef}
                   className="h-full w-full object-cover"
                   onError={(err) => {
-                    setCameraError(err.message || 'Could not access your camera.')
+                    setCameraError(err.message || t('Could not access your camera.'))
                     setMode('idle')
                   }}
                 />
@@ -123,11 +125,11 @@ export default function IdentityVerification() {
               </div>
               <div className="flex w-full gap-2.5">
                 <Button variant="ghost" onClick={() => setMode('idle')} className="w-full">
-                  Cancel
+                  {t('Cancel')}
                 </Button>
                 <Button onClick={handleCapture} className="w-full">
                   <Camera size={18} />
-                  Capture
+                  {t('Capture')}
                 </Button>
               </div>
             </div>
@@ -135,7 +137,7 @@ export default function IdentityVerification() {
             <div className="mt-2 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong bg-bg-sunken p-8 text-center">
               <IdentificationCard size={36} className="text-ink-faint" />
               <p className="max-w-[220px] text-[13px] text-ink-muted">
-                Frame your passport photo page or government ID inside the card.
+                {t('Frame your passport photo page or government ID inside the card.')}
               </p>
               {cameraError && <p className="text-[12.5px] text-danger">{cameraError}</p>}
               <div className="flex w-full flex-col gap-2.5">
@@ -148,7 +150,7 @@ export default function IdentityVerification() {
                   className="w-full"
                 >
                   <Camera size={18} />
-                  Take photo
+                  {t('Take photo')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -157,7 +159,7 @@ export default function IdentityVerification() {
                   className="w-full"
                 >
                   <UploadSimple size={17} />
-                  {mode === 'uploading' ? 'Uploading…' : 'Upload from gallery'}
+                  {mode === 'uploading' ? t('Uploading…') : t('Upload from gallery')}
                 </Button>
               </div>
             </div>
@@ -167,10 +169,10 @@ export default function IdentityVerification() {
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 text-[14px] font-medium text-ink">
                   <CheckCircle size={16} weight="fill" className="shrink-0 text-success" />
-                  Photo captured
+                  {t('Photo captured')}
                 </p>
                 <p className="text-[12.5px] text-ink-muted">
-                  We'll use this to confirm you're a real traveler.
+                  {t("We'll use this to confirm you're a real traveler.")}
                 </p>
               </div>
               <button
@@ -178,14 +180,14 @@ export default function IdentityVerification() {
                 onClick={() => setDraftField('idPhoto', '')}
                 className="shrink-0 text-[13px] font-medium text-accent-strong cursor-pointer"
               >
-                Retake
+                {t('Retake')}
               </button>
             </div>
           )}
         </div>
 
         <Button size="lg" disabled={!dobValid || !captured} onClick={handleContinue} className="w-full">
-          Continue
+          {t('Continue')}
         </Button>
       </div>
     </OnboardingLayout>

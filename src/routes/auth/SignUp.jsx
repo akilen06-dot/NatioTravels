@@ -8,10 +8,12 @@ import PhoneField from '../../components/PhoneField'
 import Button from '../../components/Button'
 import { useStore, isUsernameTaken } from '../../lib/store'
 import { countries } from '../../lib/mockData'
+import { useT } from '../../lib/i18n'
 
 const USERNAME_PATTERN = /^[a-z0-9_.]{3,20}$/i
 
 export default function SignUp() {
+  const t = useT()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const intendedPlan = searchParams.get('plan')
@@ -31,21 +33,21 @@ export default function SignUp() {
   async function handleSubmit(e) {
     e.preventDefault()
     const next = {}
-    if (name.trim().length < 2) next.name = 'Enter your name.'
+    if (name.trim().length < 2) next.name = t('Enter your name.')
     if (!USERNAME_PATTERN.test(username.trim())) {
-      next.username = '3-20 characters: letters, numbers, underscores, or periods.'
+      next.username = t('3-20 characters: letters, numbers, underscores, or periods.')
     } else if (await isUsernameTaken(useStore.getState(), username)) {
-      next.username = 'That username is taken. Try another.'
+      next.username = t('That username is taken. Try another.')
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      next.email = 'Enter a valid email address.'
+      next.email = t('Enter a valid email address.')
     } else if (existingUsers.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())) {
-      next.email = 'An account with this email already exists. Try signing in instead.'
+      next.email = t('An account with this email already exists. Try signing in instead.')
     }
-    if (password.length < 8) next.password = 'Password must be at least 8 characters.'
-    if (phoneNumber.replace(/\D/g, '').length < 6) next.phone = 'Enter a valid phone number.'
-    if (!country) next.country = 'Select your country of origin.'
-    if (!agreedToTerms) next.terms = 'You need to agree to the Terms and Privacy Policy to continue.'
+    if (password.length < 8) next.password = t('Password must be at least 8 characters.')
+    if (phoneNumber.replace(/\D/g, '').length < 6) next.phone = t('Enter a valid phone number.')
+    if (!country) next.country = t('Select your country of origin.')
+    if (!agreedToTerms) next.terms = t('You need to agree to the Terms and Privacy Policy to continue.')
     setErrors(next)
     if (Object.keys(next).length) return
     beginSignUp({
@@ -64,26 +66,26 @@ export default function SignUp() {
     <OnboardingLayout
       step={1}
       totalSteps={4}
-      title="Create your account"
-      subtitle="We'll use this to verify you and match you with travelers from home."
+      title={t('Create your account')}
+      subtitle={t("We'll use this to verify you and match you with travelers from home.")}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Field label="Name" htmlFor="name" error={errors.name}>
+        <Field label={t('Name')} htmlFor="name" error={errors.name}>
           <input
             id="name"
             autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder={t('Your name')}
             className={fieldClasses(!!errors.name)}
           />
         </Field>
 
         <Field
-          label="Username"
+          label={t('Username')}
           htmlFor="username"
           error={errors.username}
-          helper={errors.username ? undefined : "Others will find you by this. Letters, numbers, '_' or '.'"}
+          helper={errors.username ? undefined : t("Others will find you by this. Letters, numbers, '_' or '.'")}
         >
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-faint">
@@ -101,7 +103,7 @@ export default function SignUp() {
           </div>
         </Field>
 
-        <Field label="Email" htmlFor="email" error={errors.email}>
+        <Field label={t('Email')} htmlFor="email" error={errors.email}>
           <input
             id="email"
             type="email"
@@ -113,7 +115,7 @@ export default function SignUp() {
           />
         </Field>
 
-        <Field label="Password" htmlFor="password" error={errors.password} helper={errors.password ? undefined : 'At least 8 characters.'}>
+        <Field label={t('Password')} htmlFor="password" error={errors.password} helper={errors.password ? undefined : t('At least 8 characters.')}>
           <div className="relative">
             <input
               id="password"
@@ -121,13 +123,13 @@ export default function SignUp() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a password"
+              placeholder={t('Create a password')}
               className={`${fieldClasses(!!errors.password)} pr-10`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? t('Hide password') : t('Show password')}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint transition-colors duration-200 hover:text-ink-muted cursor-pointer"
             >
               {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
@@ -135,7 +137,7 @@ export default function SignUp() {
           </div>
         </Field>
 
-        <Field label="Phone number" htmlFor="phone" error={errors.phone}>
+        <Field label={t('Phone number')} htmlFor="phone" error={errors.phone}>
           <PhoneField
             id="phone"
             dialCode={dialCode}
@@ -146,14 +148,14 @@ export default function SignUp() {
           />
         </Field>
 
-        <Field label="Country of origin" htmlFor="country" error={errors.country}>
+        <Field label={t('Country of origin')} htmlFor="country" error={errors.country}>
           <select
             id="country"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             className={fieldClasses(!!errors.country)}
           >
-            <option value="">Select a country</option>
+            <option value="">{t('Select a country')}</option>
             {countries.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -171,14 +173,14 @@ export default function SignUp() {
               className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent-strong"
             />
             <span>
-              I agree to Natio's{' '}
+              {t("I agree to Natio's")}{' '}
               <Link
                 to="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-accent-strong underline underline-offset-2"
               >
-                Terms
+                {t('Terms')}
               </Link>{' '}
               &amp;{' '}
               <Link
@@ -187,7 +189,7 @@ export default function SignUp() {
                 rel="noopener noreferrer"
                 className="font-medium text-accent-strong underline underline-offset-2"
               >
-                Privacy Policy
+                {t('Privacy Policy')}
               </Link>
               .
             </span>
@@ -196,17 +198,17 @@ export default function SignUp() {
         </div>
 
         <Button type="submit" size="lg" className="mt-2 w-full">
-          Continue
+          {t('Continue')}
         </Button>
 
         <p className="text-center text-[13.5px] text-ink-muted">
-          Already have an account?{' '}
+          {t('Already have an account?')}{' '}
           <button
             type="button"
             onClick={() => navigate('/signin')}
             className="font-medium text-accent-strong cursor-pointer"
           >
-            Sign in
+            {t('Sign in')}
           </button>
         </p>
       </form>

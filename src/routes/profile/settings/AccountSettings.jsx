@@ -7,10 +7,11 @@ import Button from '../../../components/Button'
 import Switch from '../../../components/Switch'
 import { useStore, DEFAULT_AD_PREFERENCES } from '../../../lib/store'
 import { isBackendConfigured } from '../../../lib/supabaseClient'
-
-const PLAN_LABEL = { trip: 'Trip Pass', subscription: 'Frequent Traveler' }
+import { useT } from '../../../lib/i18n'
 
 export default function AccountSettings() {
+  const t = useT()
+  const PLAN_LABEL = { trip: t('Trip Pass'), subscription: t('Frequent Traveler') }
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
   const changePassword = useStore((s) => s.changePassword)
@@ -28,9 +29,9 @@ export default function AccountSettings() {
     e.preventDefault()
     setSuccess('')
     const next = {}
-    if (!currentPassword) next.currentPassword = 'Enter your current password.'
-    if (newPassword.length < 8) next.newPassword = 'New password must be at least 8 characters.'
-    if (newPassword !== confirmPassword) next.confirmPassword = "Passwords don't match."
+    if (!currentPassword) next.currentPassword = t('Enter your current password.')
+    if (newPassword.length < 8) next.newPassword = t('New password must be at least 8 characters.')
+    if (newPassword !== confirmPassword) next.confirmPassword = t("Passwords don't match.")
     setErrors(next)
     if (Object.keys(next).length) return
 
@@ -42,7 +43,7 @@ export default function AccountSettings() {
     setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
-    setSuccess('Password updated.')
+    setSuccess(t('Password updated.'))
   }
 
   return (
@@ -53,31 +54,31 @@ export default function AccountSettings() {
         className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-muted transition-colors duration-200 hover:text-ink cursor-pointer"
       >
         <ArrowLeft size={16} />
-        Settings
+        {t('Settings')}
       </button>
 
-      <h1 className="mt-4 text-xl font-semibold text-ink">Account</h1>
+      <h1 className="mt-4 text-xl font-semibold text-ink">{t('Account')}</h1>
 
       <section className="mt-6 rounded-2xl border border-border bg-bg-raised p-5">
-        <h2 className="text-[14.5px] font-medium text-ink">Account details</h2>
+        <h2 className="text-[14.5px] font-medium text-ink">{t('Account details')}</h2>
         <dl className="mt-3 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-[13px] text-ink-muted">Name</dt>
+            <dt className="text-[13px] text-ink-muted">{t('Name')}</dt>
             <dd className="truncate text-[13.5px] font-medium text-ink">{currentUser.name}</dd>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-[13px] text-ink-muted">Username</dt>
+            <dt className="text-[13px] text-ink-muted">{t('Username')}</dt>
             <dd className="truncate text-[13.5px] font-medium text-ink">@{currentUser.username}</dd>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-[13px] text-ink-muted">Email</dt>
+            <dt className="text-[13px] text-ink-muted">{t('Email')}</dt>
             <dd className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-medium text-ink">
               <span className="truncate">{currentUser.email}</span>
               {isBackendConfigured &&
                 (currentUser.emailVerified ? (
                   <CheckCircle size={14} weight="fill" className="shrink-0 text-success" />
                 ) : (
-                  <span className="shrink-0 text-[11px] font-normal text-ink-faint">(unverified)</span>
+                  <span className="shrink-0 text-[11px] font-normal text-ink-faint">{t('(unverified)')}</span>
                 ))}
             </dd>
           </div>
@@ -85,9 +86,9 @@ export default function AccountSettings() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-border bg-bg-raised p-5">
-        <h2 className="text-[14.5px] font-medium text-ink">Change password</h2>
+        <h2 className="text-[14.5px] font-medium text-ink">{t('Change password')}</h2>
         <form onSubmit={handlePasswordSubmit} className="mt-4 flex flex-col gap-4">
-          <Field label="Current password" htmlFor="current-password" error={errors.currentPassword}>
+          <Field label={t('Current password')} htmlFor="current-password" error={errors.currentPassword}>
             <input
               id="current-password"
               type="password"
@@ -97,7 +98,7 @@ export default function AccountSettings() {
               className={fieldClasses(!!errors.currentPassword)}
             />
           </Field>
-          <Field label="New password" htmlFor="new-password" error={errors.newPassword}>
+          <Field label={t('New password')} htmlFor="new-password" error={errors.newPassword}>
             <input
               id="new-password"
               type="password"
@@ -107,7 +108,7 @@ export default function AccountSettings() {
               className={fieldClasses(!!errors.newPassword)}
             />
           </Field>
-          <Field label="Confirm new password" htmlFor="confirm-password" error={errors.confirmPassword}>
+          <Field label={t('Confirm new password')} htmlFor="confirm-password" error={errors.confirmPassword}>
             <input
               id="confirm-password"
               type="password"
@@ -124,7 +125,7 @@ export default function AccountSettings() {
             </p>
           )}
           <Button type="submit" size="sm" className="w-fit">
-            Update password
+            {t('Update password')}
           </Button>
         </form>
       </section>
@@ -132,37 +133,36 @@ export default function AccountSettings() {
       <section className="mt-4 rounded-2xl border border-border bg-bg-raised p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-[14.5px] font-medium text-ink">Personalized ads</h2>
+            <h2 className="text-[14.5px] font-medium text-ink">{t('Personalized ads')}</h2>
             <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-              Use your activity on Natio to show you more relevant ads. Turning this off shows
-              generic ads instead.
+              {t('Use your activity on Natio to show you more relevant ads. Turning this off shows generic ads instead.')}
             </p>
           </div>
           <Switch
             checked={adPrefs.personalized}
             onChange={(v) => setAdPreference('personalized', v)}
-            label="Personalized ads"
+            label={t('Personalized ads')}
           />
         </div>
       </section>
 
       <section className="mt-4 rounded-2xl border border-border bg-bg-raised p-5">
-        <h2 className="text-[14.5px] font-medium text-ink">Billing information</h2>
+        <h2 className="text-[14.5px] font-medium text-ink">{t('Billing information')}</h2>
         {currentUser.plan ? (
           <>
             <p className="mt-2 text-[13.5px] text-ink-muted">
               {PLAN_LABEL[currentUser.plan]}
               {currentUser.plan === 'subscription'
-                ? ` · billed ${currentUser.billing === 'annual' ? 'yearly' : 'monthly'}`
+                ? ` · ${t('billed {cadence}', { cadence: currentUser.billing === 'annual' ? t('yearly') : t('monthly') })}`
                 : ''}
             </p>
             <p className="mt-1 text-[12.5px] text-ink-faint">
-              Payment method on file. This is a prototype — no real card data is stored.
+              {t('Payment method on file. This is a prototype — no real card data is stored.')}
             </p>
           </>
         ) : (
           <p className="mt-2 text-[13.5px] text-ink-muted">
-            No billing information on file. You're browsing without a plan.
+            {t("No billing information on file. You're browsing without a plan.")}
           </p>
         )}
         <Button
@@ -171,7 +171,7 @@ export default function AccountSettings() {
           className="mt-4"
           onClick={() => navigate('/onboarding/plan')}
         >
-          {currentUser.plan ? 'Manage payment method' : 'Add a plan'}
+          {currentUser.plan ? t('Manage payment method') : t('Add a plan')}
         </Button>
       </section>
     </div>
