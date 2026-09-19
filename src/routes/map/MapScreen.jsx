@@ -8,23 +8,59 @@ import { isMapboxConfigured, mapboxToken } from '../../lib/mapbox'
 import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
 
-// Colorful styles, not the muted grayscale ones — the map is the whole
-// point of this screen, so it should look lively rather than like a UI
-// backdrop.
+// The minimal base styles, not Mapbox's default "streets" look — its stock
+// oranges/greens/blues belong to Mapbox, not Natio. Starting from the plain
+// style and repainting a few layers below (applyBrandColors) is what makes
+// the map read as ours instead of a generic Google-Maps-style basemap.
 function styleForTheme(theme) {
-  return theme === 'dark'
-    ? 'mapbox://styles/mapbox/navigation-night-v1'
-    : 'mapbox://styles/mapbox/streets-v12'
+  return theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'
 }
 
-// A rotating palette so markers are visually distinct rather than one flat
-// color repeated everywhere — purely cosmetic, picked deterministically per
-// group so the same group always gets the same color.
-const PIN_COLORS = ['#f97316', '#ec4899', '#8b5cf6', '#06b6d4', '#22c55e', '#eab308']
-function colorForId(id) {
+// Same blue/teal/coral trio used everywhere else in the app (index.css
+// --color-accent-strong/--color-teal/--color-coral), so the map's land,
+// water, and parks read as Natio's palette rather than Mapbox's defaults.
+const BRAND_MAP_COLORS = {
+  light: { land: '#eef1f8', water: '#c7d6fb', park: '#cfece6' },
+  dark: { land: '#0a0e1a', water: '#16224a', park: '#0f2b27' },
+}
+
+// Repaints a loaded style's land/water/park layers to match the brand
+// palette above. Runs on every 'style.load' (initial load AND every later
+// setStyle() from a theme change — Mapbox drops custom paint overrides on
+// setStyle, so this has to reapply each time, not just once at creation.
+// Layer ids aren't guaranteed to be stable across Mapbox style revisions,
+// so this matches by type + a loose id pattern and skips anything that
+// doesn't match, rather than hardcoding an exact expected layer list.
+function applyBrandColors(map, theme) {
+  const colors = BRAND_MAP_COLORS[theme] || BRAND_MAP_COLORS.light
+  const layers = map.getStyle()?.layers || []
+  layers.forEach((layer) => {
+    try {
+      if (layer.type === 'background') {
+        map.setPaintProperty(layer.id, 'background-color', colors.land)
+      } else if (layer.type === 'fill' && /water/i.test(layer.id)) {
+        map.setPaintProperty(layer.id, 'fill-color', colors.water)
+      } else if (layer.type === 'fill' && /(park|landuse|wood|forest|grass|golf|pitch|cemetery)/i.test(layer.id)) {
+        map.setPaintProperty(layer.id, 'fill-color', colors.park)
+      }
+    } catch {
+      /* this style revision doesn't expose this paint property on this layer — skip it */
+    }
+  })
+}
+
+// Same blue/teal/coral trio, rotated per marker so groups are visually
+// distinct — deterministic per group id, not random, so a group keeps the
+// same color across re-renders.
+const PIN_COLORS = {
+  light: ['#1d3fc4', '#0f9b8e', '#e2703a'],
+  dark: ['#3b5fe0', '#3fbdae', '#f0895c'],
+}
+function colorForId(id, theme) {
   let hash = 0
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return PIN_COLORS[hash % PIN_COLORS.length]
+  const palette = PIN_COLORS[theme] || PIN_COLORS.light
+  return palette[hash % palette.length]
 }
 
 export default function MapScreen() {
@@ -39,6 +75,15 @@ export default function MapScreen() {
   const mapRef = useRef(null)
   const markersRef = useRef([])
   const [mapError, setMapError] = useState('')
+
+  // 'style.load' fires later (async style/tile loading) and needs the
+  // *current* theme at that moment, not whatever it was when the effect
+  // that registered the listener last ran — a plain closure over `theme`
+  // would go stale across re-renders, so read it from a ref instead.
+  const themeRef = useRef(theme)
+  useEffect(() => {
+    themeRef.current = theme
+  }, [theme])
 
   // Group meetups, not individual people — pinning exactly where a person
   // is standing is a real safety risk (it tells anyone browsing precisely
@@ -80,6 +125,9 @@ export default function MapScreen() {
       const detail = err?.message || (err?.status ? `HTTP ${err.status} ${err.statusText || ''}`.trim() : 'Unknown error')
       setMapError(detail)
     })
+    // Fires on this initial load AND again on every later setStyle() call
+    // (theme toggling), since a new style has none of our overrides yet.
+    map.on('style.load', () => applyBrandColors(map, themeRef.current))
     mapRef.current = map
 
     // The container sits inside a flex layout (sized by its parent, not by
@@ -124,7 +172,7 @@ export default function MapScreen() {
       el.type = 'button'
       el.setAttribute('aria-label', group.name)
       el.title = `${group.name} · ${group.city}`
-      el.style.cssText = `width:38px;height:38px;border-radius:9999px;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.35);background:${colorForId(group.id)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;`
+      el.style.cssText = `width:38px;height:38px;border-radius:9999px;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.35);background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;`
       el.textContent = '👥'
       el.addEventListener('click', () => navigate(`/groups/${group.id}`))
       return new mapboxgl.Marker({ element: el }).setLngLat([group.lng, group.lat]).addTo(mapRef.current)
@@ -132,7 +180,7 @@ export default function MapScreen() {
     return () => {
       markersRef.current.forEach((marker) => marker.remove())
     }
-  }, [groupPins, navigate])
+  }, [groupPins, navigate, theme])
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
