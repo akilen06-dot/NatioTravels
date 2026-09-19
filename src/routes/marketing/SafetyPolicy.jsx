@@ -1,9 +1,12 @@
 import Nav from './sections/Nav'
 import Footer from './sections/Footer'
 import PolicySection from '../../components/PolicySection'
-import { policySections } from '../../lib/safetyPolicy'
+import { getPolicySections } from '../../lib/safetyPolicy'
+import { useT } from '../../lib/i18n'
 
 export default function SafetyPolicy() {
+  const t = useT()
+  const policySections = getPolicySections(t)
   return (
     <div>
       <Nav />

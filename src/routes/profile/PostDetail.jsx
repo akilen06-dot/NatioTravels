@@ -4,25 +4,18 @@ import { ArrowLeft, Archive, ArrowUUpLeft, Heart, Trash } from '@phosphor-icons/
 import { fieldClasses } from '../../lib/fieldClasses'
 import { useStore, findPersonById } from '../../lib/store'
 import Avatar from '../../components/Avatar'
-
-function timeAgo(iso) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'now'
-  if (mins < 60) return `${mins}m`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h`
-  return `${Math.floor(hrs / 24)}d`
-}
+import { useT, useTimeAgo } from '../../lib/i18n'
 
 function CommentRow({ comment }) {
+  const t = useT()
+  const timeAgo = useTimeAgo()
   const author = useStore((s) => findPersonById(s, comment.authorId))
   return (
     <div className="flex items-start gap-3 py-2.5">
       <Avatar src={author?.photo} className="h-8 w-8 shrink-0 rounded-full object-cover" />
       <div className="min-w-0">
         <p className="text-[13.5px] leading-relaxed text-ink">
-          <span className="font-medium">{author?.name ?? 'Someone'}</span>{' '}
+          <span className="font-medium">{author?.name ?? t('Someone')}</span>{' '}
           <span className="text-ink-muted">{comment.text}</span>
         </p>
         <p className="mt-0.5 text-[11.5px] text-ink-faint">{timeAgo(comment.at)}</p>
@@ -32,6 +25,8 @@ function CommentRow({ comment }) {
 }
 
 export default function PostDetail() {
+  const t = useT()
+  const timeAgo = useTimeAgo()
   const { postId } = useParams()
   const navigate = useNavigate()
   const currentUser = useStore((s) => s.currentUser)
@@ -45,7 +40,7 @@ export default function PostDetail() {
   const [text, setText] = useState('')
 
   if (!post) {
-    return <p className="p-8 text-center text-ink-muted">Post not found.</p>
+    return <p className="p-8 text-center text-ink-muted">{t('Post not found.')}</p>
   }
 
   const liked = post.likedBy.includes(currentUser.id)
@@ -69,7 +64,7 @@ export default function PostDetail() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          aria-label="Back"
+          aria-label={t('Back')}
           className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
         >
           <ArrowLeft size={18} />
@@ -83,7 +78,7 @@ export default function PostDetail() {
             <button
               type="button"
               onClick={() => (post.archived ? unarchivePost(postId) : archivePost(postId))}
-              aria-label={post.archived ? 'Unarchive post' : 'Archive post'}
+              aria-label={post.archived ? t('Unarchive post') : t('Archive post')}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-faint transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
             >
               {post.archived ? <ArrowUUpLeft size={16} /> : <Archive size={16} />}
@@ -91,7 +86,7 @@ export default function PostDetail() {
             <button
               type="button"
               onClick={handleDelete}
-              aria-label="Delete post"
+              aria-label={t('Delete post')}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-faint transition-colors duration-200 hover:text-danger hover:bg-danger-tint cursor-pointer"
             >
               <Trash size={17} />
@@ -107,7 +102,7 @@ export default function PostDetail() {
           <img src={post.photo} alt="" className="aspect-square w-full object-cover" />
           {post.archived && (
             <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11.5px] font-medium text-white backdrop-blur-sm">
-              Archived · only you can see this
+              {t('Archived · only you can see this')}
             </span>
           )}
         </div>
@@ -116,7 +111,7 @@ export default function PostDetail() {
           <button
             type="button"
             onClick={() => toggleLikePost(postId)}
-            aria-label={liked ? 'Unlike' : 'Like'}
+            aria-label={liked ? t('Unlike') : t('Like')}
             className="inline-flex items-center gap-2 cursor-pointer"
           >
             <Heart
@@ -125,7 +120,9 @@ export default function PostDetail() {
               className={liked ? 'text-danger' : 'text-ink'}
             />
             <span className="text-[13.5px] font-medium text-ink">
-              {post.likedBy.length} {post.likedBy.length === 1 ? 'like' : 'likes'}
+              {post.likedBy.length === 1
+                ? t('{count} like', { count: post.likedBy.length })
+                : t('{count} likes', { count: post.likedBy.length })}
             </span>
           </button>
 
@@ -137,7 +134,7 @@ export default function PostDetail() {
 
           <div className="mt-4 divide-y divide-border border-t border-border">
             {post.comments.length === 0 ? (
-              <p className="py-4 text-[13px] text-ink-muted">No comments yet.</p>
+              <p className="py-4 text-[13px] text-ink-muted">{t('No comments yet.')}</p>
             ) : (
               post.comments.map((c) => <CommentRow key={c.id} comment={c} />)
             )}
@@ -149,7 +146,7 @@ export default function PostDetail() {
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Add a comment"
+          placeholder={t('Add a comment')}
           className={fieldClasses(false)}
         />
         <button
@@ -157,7 +154,7 @@ export default function PostDetail() {
           disabled={!text.trim()}
           className="shrink-0 text-[13.5px] font-medium text-accent-strong disabled:opacity-40 cursor-pointer"
         >
-          Post
+          {t('Post')}
         </button>
       </form>
     </div>

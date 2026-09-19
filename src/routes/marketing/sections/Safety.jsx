@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from '@phosphor-icons/react'
-import { policySections } from '../../../lib/safetyPolicy'
+import { getPolicySections } from '../../../lib/safetyPolicy'
+import { useT } from '../../../lib/i18n'
 
 const tintClasses = {
   accent: 'bg-accent-tint text-accent-strong',
@@ -10,6 +11,8 @@ const tintClasses = {
 }
 
 export default function Safety() {
+  const t = useT()
+  const policySections = getPolicySections(t)
   return (
     <section id="safety" className="border-t border-border bg-bg-sunken">
       <div className="mx-auto max-w-6xl px-5 py-24 md:py-32">

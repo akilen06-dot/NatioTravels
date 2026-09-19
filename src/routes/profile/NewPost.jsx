@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ImageSquare, UploadSimple } from '@phosphor-icons/react'
 import { useStore } from '../../lib/store'
 import { readAndResizeImage } from '../../lib/imageFile'
+import { useT } from '../../lib/i18n'
 
 export default function NewPost() {
+  const t = useT()
   const navigate = useNavigate()
   const createPost = useStore((s) => s.createPost)
   const fileInputRef = useRef(null)
@@ -23,7 +25,7 @@ export default function NewPost() {
       const dataUrl = await readAndResizeImage(file)
       setPhoto(dataUrl)
     } catch (err) {
-      setError(err.message || "Couldn't use that photo. Try another one.")
+      setError(err.message || t("Couldn't use that photo. Try another one."))
     } finally {
       setLoadingUpload(false)
     }
@@ -31,7 +33,7 @@ export default function NewPost() {
 
   async function handleShare() {
     if (!photo) {
-      setError('Add a photo to share.')
+      setError(t('Add a photo to share.'))
       return
     }
     await createPost({ photo, caption: caption.trim() })
@@ -44,12 +46,12 @@ export default function NewPost() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          aria-label="Back"
+          aria-label={t('Back')}
           className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink hover:bg-bg-sunken cursor-pointer"
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-[15px] font-semibold text-ink">New post</h1>
+        <h1 className="text-[15px] font-semibold text-ink">{t('New post')}</h1>
         <div className="w-8" />
       </div>
 
@@ -68,12 +70,12 @@ export default function NewPost() {
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-ink-faint">
               <ImageSquare size={32} />
-              <span className="text-[13px]">No photo selected</span>
+              <span className="text-[13px]">{t('No photo selected')}</span>
             </div>
           )}
           {loadingUpload && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[13px] font-medium text-white">
-              Preparing photo…
+              {t('Preparing photo…')}
             </div>
           )}
         </div>
@@ -85,17 +87,17 @@ export default function NewPost() {
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-accent-strong/90 disabled:opacity-60 cursor-pointer"
         >
           <UploadSimple size={17} weight="bold" />
-          Choose from your device
+          {t('Choose from your device')}
         </button>
         {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
       </div>
 
-      <p className="mt-8 text-[13.5px] font-medium text-ink">Caption</p>
+      <p className="mt-8 text-[13.5px] font-medium text-ink">{t('Caption')}</p>
       <textarea
         value={caption}
         onChange={(e) => setCaption(e.target.value)}
         rows={3}
-        placeholder="Write a caption"
+        placeholder={t('Write a caption')}
         className="mt-2 w-full resize-none rounded-xl border border-border-strong bg-bg-raised px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-faint outline-none transition-colors duration-200 focus:border-accent focus:ring-2 focus:ring-accent/25"
       />
 
@@ -105,7 +107,7 @@ export default function NewPost() {
         disabled={loadingUpload}
         className="mt-6 h-11 w-full rounded-full bg-accent-strong text-[15px] font-medium text-white transition-colors duration-200 hover:bg-accent-strong/90 disabled:opacity-60 cursor-pointer"
       >
-        Share
+        {t('Share')}
       </button>
     </div>
   )
