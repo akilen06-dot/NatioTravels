@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { UsersThree } from '@phosphor-icons/react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import TripLockedNotice from '../../components/TripLockedNotice'
@@ -8,50 +10,18 @@ import { isMapboxConfigured, mapboxToken } from '../../lib/mapbox'
 import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
 
-// The minimal base styles, not Mapbox's default "streets" look — its stock
-// oranges/greens/blues belong to Mapbox, not Natio. Starting from the plain
-// style and repainting a few layers below (applyBrandColors) is what makes
-// the map read as ours instead of a generic Google-Maps-style basemap.
-function styleForTheme(theme) {
-  return theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'
-}
+// Mapbox's current flagship style — soft shading, 3D buildings, real
+// depth — instead of the flat, dated-looking classic light-v11/dark-v11
+// styles. One style handles both themes via its own lightPreset config
+// (below), so there's no setStyle()-driven style swap on theme toggle
+// (which is also what makes this simpler than the old approach: config
+// properties apply instantly without re-fetching/re-cancelling a style).
+const MAP_STYLE = 'mapbox://styles/mapbox/standard'
 
 // Same blue/teal/coral trio used everywhere else in the app (index.css
-// --color-accent-strong/--color-teal/--color-coral), so the map's land,
-// water, and parks read as Natio's palette rather than Mapbox's defaults.
-const BRAND_MAP_COLORS = {
-  light: { land: '#eef1f8', water: '#c7d6fb', park: '#cfece6' },
-  dark: { land: '#0a0e1a', water: '#16224a', park: '#0f2b27' },
-}
-
-// Repaints a loaded style's land/water/park layers to match the brand
-// palette above. Runs on every 'style.load' (initial load AND every later
-// setStyle() from a theme change — Mapbox drops custom paint overrides on
-// setStyle, so this has to reapply each time, not just once at creation.
-// Layer ids aren't guaranteed to be stable across Mapbox style revisions,
-// so this matches by type + a loose id pattern and skips anything that
-// doesn't match, rather than hardcoding an exact expected layer list.
-function applyBrandColors(map, theme) {
-  const colors = BRAND_MAP_COLORS[theme] || BRAND_MAP_COLORS.light
-  const layers = map.getStyle()?.layers || []
-  layers.forEach((layer) => {
-    try {
-      if (layer.type === 'background') {
-        map.setPaintProperty(layer.id, 'background-color', colors.land)
-      } else if (layer.type === 'fill' && /water/i.test(layer.id)) {
-        map.setPaintProperty(layer.id, 'fill-color', colors.water)
-      } else if (layer.type === 'fill' && /(park|landuse|wood|forest|grass|golf|pitch|cemetery)/i.test(layer.id)) {
-        map.setPaintProperty(layer.id, 'fill-color', colors.park)
-      }
-    } catch {
-      /* this style revision doesn't expose this paint property on this layer — skip it */
-    }
-  })
-}
-
-// Same blue/teal/coral trio, rotated per marker so groups are visually
-// distinct — deterministic per group id, not random, so a group keeps the
-// same color across re-renders.
+// --color-accent-strong/--color-teal/--color-coral), rotated per marker so
+// groups are visually distinct — deterministic per group id, not random,
+// so a group keeps the same color across re-renders.
 const PIN_COLORS = {
   light: ['#1d3fc4', '#0f9b8e', '#e2703a'],
   dark: ['#3b5fe0', '#3fbdae', '#f0895c'],
@@ -62,6 +32,13 @@ function colorForId(id, theme) {
   const palette = PIN_COLORS[theme] || PIN_COLORS.light
   return palette[hash % palette.length]
 }
+
+// Same icon as the Groups nav item, rendered once to an HTML string —
+// Mapbox markers are plain DOM, not React, so this is how a React icon
+// component ends up inside one. A crisp vector glyph reads far more
+// current than a platform emoji, which renders inconsistently and looks
+// dated on most systems.
+const MARKER_ICON_HTML = renderToStaticMarkup(<UsersThree size={16} weight="bold" color="#ffffff" />)
 
 export default function MapScreen() {
   const t = useT()
@@ -75,15 +52,6 @@ export default function MapScreen() {
   const mapRef = useRef(null)
   const markersRef = useRef([])
   const [mapError, setMapError] = useState('')
-
-  // 'style.load' fires later (async style/tile loading) and needs the
-  // *current* theme at that moment, not whatever it was when the effect
-  // that registered the listener last ran — a plain closure over `theme`
-  // would go stale across re-renders, so read it from a ref instead.
-  const themeRef = useRef(theme)
-  useEffect(() => {
-    themeRef.current = theme
-  }, [theme])
 
   // Group meetups, not individual people — pinning exactly where a person
   // is standing is a real safety risk (it tells anyone browsing precisely
@@ -109,9 +77,10 @@ export default function MapScreen() {
     const hasHome = currentUser?.lat != null && currentUser?.lng != null
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: styleForTheme(theme),
+      style: MAP_STYLE,
       center: hasHome ? [currentUser.lng, currentUser.lat] : [0, 20],
       zoom: hasHome ? 11 : 1.5,
+      pitch: hasHome ? 40 : 0,
     })
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
     // Mapbox fails completely silently by default (a bad/restricted token,
@@ -125,9 +94,15 @@ export default function MapScreen() {
       const detail = err?.message || (err?.status ? `HTTP ${err.status} ${err.statusText || ''}`.trim() : 'Unknown error')
       setMapError(detail)
     })
-    // Fires on this initial load AND again on every later setStyle() call
-    // (theme toggling), since a new style has none of our overrides yet.
-    map.on('style.load', () => applyBrandColors(map, themeRef.current))
+    // Standard's own config, applied once its default import is ready —
+    // 'faded' is a softer, less saturated palette than Mapbox's default
+    // (closer to this app's own muted design language) and hiding POI
+    // labels cuts the clutter that makes a map feel busy/dated at a glance.
+    map.on('style.load', () => {
+      map.setConfigProperty('basemap', 'theme', 'faded')
+      map.setConfigProperty('basemap', 'lightPreset', theme === 'dark' ? 'night' : 'day')
+      map.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
+    })
     mapRef.current = map
 
     // The container sits inside a flex layout (sized by its parent, not by
@@ -146,22 +121,21 @@ export default function MapScreen() {
       mapRef.current = null
     }
     // Only ever created once — theme changes are handled by the effect
-    // below via setStyle() instead of recreating the map.
+    // below via setConfigProperty() instead of recreating the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const isInitialThemeSync = useRef(true)
   useEffect(() => {
-    // Skip the run that fires on mount alongside the map-creation effect
-    // above — the map is already built with this exact style, and calling
-    // setStyle() again immediately cancels that still-in-flight initial
-    // style request (confirmed via a cancelled network request), leaving
-    // the map with no style at all and a blank canvas.
-    if (isInitialThemeSync.current) {
-      isInitialThemeSync.current = false
-      return
+    // A config property, not setStyle() — Standard's light preset switches
+    // instantly with no network refetch, unlike swapping to a whole
+    // different style (which is also what used to cause the map to go
+    // blank: setStyle() cancels whatever style request is still in flight).
+    // isStyleLoaded() guards the very first run, since the map's initial
+    // 'style.load' (in the effect above) already applies the starting
+    // preset and may not have fired yet on the same tick this runs.
+    if (mapRef.current?.isStyleLoaded()) {
+      mapRef.current.setConfigProperty('basemap', 'lightPreset', theme === 'dark' ? 'night' : 'day')
     }
-    mapRef.current?.setStyle(styleForTheme(theme))
   }, [theme])
 
   useEffect(() => {
@@ -172,8 +146,10 @@ export default function MapScreen() {
       el.type = 'button'
       el.setAttribute('aria-label', group.name)
       el.title = `${group.name} · ${group.city}`
-      el.style.cssText = `width:38px;height:38px;border-radius:9999px;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.35);background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;`
-      el.textContent = '👥'
+      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18);background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:transform 0.15s ease;`
+      el.innerHTML = MARKER_ICON_HTML
+      el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.15)' })
+      el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })
       el.addEventListener('click', () => navigate(`/groups/${group.id}`))
       return new mapboxgl.Marker({ element: el }).setLngLat([group.lng, group.lat]).addTo(mapRef.current)
     })
@@ -206,9 +182,9 @@ export default function MapScreen() {
         </p>
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative mx-4 mb-4 min-h-0 flex-1 overflow-hidden rounded-2xl border border-border shadow-sm">
         {!isMapboxConfigured ? (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+          <div className="flex h-full flex-col items-center justify-center bg-bg-sunken px-6 text-center">
             <p className="text-[15px] font-medium text-ink">{t("Map isn't set up yet")}</p>
             <p className="mt-1.5 max-w-xs text-[13px] text-ink-muted">
               {t('Add a Mapbox access token to enable the map. See SETUP.md for how.')}
