@@ -8,6 +8,8 @@ import { reverseGeocode } from '../lib/geocode'
 import { newSearchSession, searchPlaces, retrievePlace } from '../lib/mapboxSearch'
 import { useT } from '../lib/i18n'
 
+const MIN_QUERY_LENGTH = 3
+
 // Click-to-drop-pin picker for a group's exact meetup spot, plus a search
 // bar for finding a named place (restaurant, bar, landmark) directly — a
 // separate Mapbox instance from the Map tab's (a modal, mounted/unmounted
@@ -70,9 +72,12 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
   }
 
   // Debounced as-you-type search — waits for a pause in typing rather than
-  // firing on every keystroke, since each call is a billed API request.
+  // firing on every keystroke, since each call is a billed API request. A
+  // 1-2 character query is too short to mean anything, so Mapbox just
+  // returns a flood of loosely-matched, mostly-irrelevant results for it —
+  // MIN_QUERY_LENGTH skips searching at all until there's enough to search.
   useEffect(() => {
-    if (!query.trim()) {
+    if (query.trim().length < MIN_QUERY_LENGTH) {
       setSuggestions([])
       setSearching(false)
       return
@@ -171,9 +176,11 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
                     placeholder={t('Search restaurants, bars, places…')}
                     className="w-full rounded-xl border border-border-strong bg-bg-raised py-2.5 pl-9 pr-3.5 text-[14px] text-ink placeholder:text-ink-faint shadow-sm outline-none transition-colors duration-200 focus:border-accent focus:ring-2 focus:ring-accent/25"
                   />
-                  {(searching || suggestions.length > 0) && (
+                  {(searching || suggestions.length > 0 || (query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH)) && (
                     <div className="absolute inset-x-0 top-full mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-border bg-bg-raised shadow-lg">
-                      {searching ? (
+                      {query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH ? (
+                        <p className="px-3.5 py-3 text-[13px] text-ink-muted">{t('Keep typing…')}</p>
+                      ) : searching ? (
                         <p className="px-3.5 py-3 text-[13px] text-ink-muted">{t('Searching…')}</p>
                       ) : (
                         suggestions.map((s) => (
