@@ -28,11 +28,32 @@ export default function CreateGroup() {
   const [dateError, setDateError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerCenter, setPickerCenter] = useState(null)
+  const [pickerLoading, setPickerLoading] = useState(false)
   // Set only via the map picker below — kept separate from the text field
   // so a pin placed on the map takes priority over forward-geocoding at
   // submit time, but is dropped the moment the user edits the text by hand
   // (at that point the text no longer necessarily describes the pin).
   const [pickedCoords, setPickedCoords] = useState(null)
+
+  // Without a starting point, the picker's search has nothing nearby to
+  // bias toward and defaults to matching by name anywhere on Earth — the
+  // demo accounts (and any real one without location permission granted)
+  // have no lat/lng at all, so fall back to geocoding whatever city the
+  // organizer already typed above, rather than searching blind.
+  async function openPicker() {
+    if (currentUser?.lat != null && currentUser?.lng != null) {
+      setPickerCenter({ lat: currentUser.lat, lng: currentUser.lng })
+    } else if (form.city.trim()) {
+      setPickerLoading(true)
+      const geo = await forwardGeocode(form.city)
+      setPickerLoading(false)
+      setPickerCenter(geo)
+    } else {
+      setPickerCenter(null)
+    }
+    setPickerOpen(true)
+  }
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -166,10 +187,11 @@ export default function CreateGroup() {
             />
             <button
               type="button"
-              onClick={() => setPickerOpen(true)}
+              onClick={openPicker}
+              disabled={pickerLoading}
               aria-label={t('Pick on a map')}
               title={t('Pick on a map')}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-bg-raised text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent-strong cursor-pointer"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-bg-raised text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <MapPinLine size={19} />
             </button>
@@ -195,7 +217,7 @@ export default function CreateGroup() {
 
       {pickerOpen && (
         <LocationPickerModal
-          initialCenter={currentUser?.lat != null && currentUser?.lng != null ? { lat: currentUser.lat, lng: currentUser.lng } : null}
+          initialCenter={pickerCenter}
           onClose={() => setPickerOpen(false)}
           onConfirm={({ lat, lng, label }) => {
             setPickedCoords({ lat, lng })

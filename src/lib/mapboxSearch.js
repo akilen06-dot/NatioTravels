@@ -9,8 +9,10 @@ export function newSearchSession() {
 
 // Autocomplete-as-you-type: restaurants, bars, cafes, landmarks, addresses
 // — anything Mapbox's places index knows about. `proximity` (optional,
-// {lat, lng}) just biases ranking toward nearby results; it doesn't filter
-// them out.
+// {lat, lng}) biases ranking toward nearby results — without it (or without
+// the `types` restriction below), Mapbox's default ranking favors broad,
+// globally-recognized places like cities and regions over small local
+// venues, which is the wrong bias for picking a meetup spot.
 export async function searchPlaces(query, sessionToken, proximity) {
   if (!isMapboxConfigured || !query?.trim()) return []
   try {
@@ -19,6 +21,10 @@ export async function searchPlaces(query, sessionToken, proximity) {
       access_token: mapboxToken,
       session_token: sessionToken,
       limit: '6',
+      // Businesses/landmarks and specific addresses only — excludes cities,
+      // regions, postcodes, etc., which otherwise crowd out the venue
+      // someone is actually searching for.
+      types: 'poi,address',
     })
     if (proximity) params.set('proximity', `${proximity.lng},${proximity.lat}`)
     const res = await fetch(`https://api.mapbox.com/search/searchbox/v1/suggest?${params}`)
