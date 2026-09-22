@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MapPinLine } from '@phosphor-icons/react'
 import Field from '../../components/Field'
 import { fieldClasses } from '../../lib/fieldClasses'
 import DatePicker from '../../components/DatePicker'
 import Button from '../../components/Button'
 import TripLockedNotice from '../../components/TripLockedNotice'
+import LocationPickerModal from '../../components/LocationPickerModal'
 import { useStore, hasAccess } from '../../lib/store'
 import { countries } from '../../lib/mockData'
 import { forwardGeocode, isGeocodingConfigured } from '../../lib/geocode'
@@ -25,6 +27,12 @@ export default function CreateGroup() {
   })
   const [dateError, setDateError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  // Set only via the map picker below — kept separate from the text field
+  // so a pin placed on the map takes priority over forward-geocoding at
+  // submit time, but is dropped the moment the user edits the text by hand
+  // (at that point the text no longer necessarily describes the pin).
+  const [pickedCoords, setPickedCoords] = useState(null)
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -52,16 +60,18 @@ export default function CreateGroup() {
       return
     }
     setSubmitting(true)
-    // Optional, and soft-fails quietly like the app's other geocoding calls
-    // — a group with no exact spot set (or one that didn't resolve) just
-    // falls back to the existing approximate map pin for everyone, members
-    // included, rather than blocking creation over it.
-    const geo = form.locationQuery.trim() ? await forwardGeocode(form.locationQuery) : null
+    // A pin dropped on the map picker is already exact — no need to
+    // forward-geocode the text on top of it. Otherwise, optional and
+    // soft-fails quietly like the app's other geocoding calls: a group
+    // with no exact spot set (or text that didn't resolve) just falls back
+    // to the existing approximate map pin for everyone, members included,
+    // rather than blocking creation over it.
+    const geo = pickedCoords ? null : form.locationQuery.trim() ? await forwardGeocode(form.locationQuery) : null
     const id = await createGroup({
       ...form,
       locationName: form.locationQuery.trim(),
-      locationLat: geo?.lat ?? null,
-      locationLng: geo?.lng ?? null,
+      locationLat: pickedCoords?.lat ?? geo?.lat ?? null,
+      locationLng: pickedCoords?.lng ?? geo?.lng ?? null,
     })
     navigate(`/groups/${id}`)
   }
@@ -143,13 +153,27 @@ export default function CreateGroup() {
               : t("Saved as text for now — ask your Natio admin to set up location lookup to also show it as a map pin.")
           }
         >
-          <input
-            id="locationQuery"
-            value={form.locationQuery}
-            onChange={(e) => update('locationQuery', e.target.value)}
-            placeholder={t('e.g. Praça do Comércio, or a bar name')}
-            className={fieldClasses(false)}
-          />
+          <div className="flex gap-2">
+            <input
+              id="locationQuery"
+              value={form.locationQuery}
+              onChange={(e) => {
+                update('locationQuery', e.target.value)
+                setPickedCoords(null)
+              }}
+              placeholder={t('e.g. Praça do Comércio, or a bar name')}
+              className={fieldClasses(false)}
+            />
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              aria-label={t('Pick on a map')}
+              title={t('Pick on a map')}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-bg-raised text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent-strong cursor-pointer"
+            >
+              <MapPinLine size={19} />
+            </button>
+          </div>
         </Field>
 
         <Field label={t('Description')} htmlFor="description">
@@ -168,6 +192,18 @@ export default function CreateGroup() {
           {submitting ? t('Creating…') : t('Create group')}
         </Button>
       </form>
+
+      {pickerOpen && (
+        <LocationPickerModal
+          initialCenter={currentUser?.lat != null && currentUser?.lng != null ? { lat: currentUser.lat, lng: currentUser.lng } : null}
+          onClose={() => setPickerOpen(false)}
+          onConfirm={({ lat, lng, label }) => {
+            setPickedCoords({ lat, lng })
+            update('locationQuery', label || t('Pinned location'))
+            setPickerOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

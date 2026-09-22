@@ -6,18 +6,9 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import { useStore, hasAccess } from '../../lib/store'
-import { isMapboxConfigured, mapboxToken } from '../../lib/mapbox'
+import { isMapboxConfigured, mapboxToken, mapboxStyle } from '../../lib/mapbox'
 import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
-
-// Custom style designed in Mapbox Studio (not one of Mapbox's stock
-// styles) — colors, water/land/parks, everything about the base map's
-// look comes from here now, not from code. Edit it at
-// studio.mapbox.com/styles/akilen06/cmu9r4gyh007401qt3piw2a1s/edit and it
-// updates on next deploy without touching this file. One style for both
-// themes for now — if a separate dark-mode design gets built later, swap
-// this back to a per-theme lookup.
-const MAP_STYLE = 'mapbox://styles/akilen06/cmu9r4gyh007401qt3piw2a1s'
 
 // Same blue/teal/coral trio used everywhere else in the app (index.css
 // --color-accent-strong/--color-teal/--color-coral), rotated per marker so
@@ -83,7 +74,7 @@ export default function MapScreen() {
     const hasHome = currentUser?.lat != null && currentUser?.lng != null
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: MAP_STYLE,
+      style: mapboxStyle,
       center: hasHome ? [currentUser.lng, currentUser.lat] : [0, 20],
       zoom: hasHome ? 11 : 1.5,
       pitch: hasHome ? 40 : 0,

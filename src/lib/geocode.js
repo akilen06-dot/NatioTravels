@@ -59,11 +59,15 @@ export async function reverseGeocode({ lat, lng }) {
     const res = await fetch(url)
     if (!res.ok) return null
     const data = await res.json()
-    const components = data?.results?.[0]?.components
-    if (!components) return null
+    const result = data?.results?.[0]
+    if (!result?.components) return null
     return {
-      city: components.city || components.town || components.village || components.state || '',
-      country: components.country || '',
+      city: result.components.city || result.components.town || result.components.village || result.components.state || '',
+      country: result.components.country || '',
+      // The full "what's actually here" address — used to label a point
+      // someone drops a pin on (a specific venue/street), where city/country
+      // alone would be too vague to be useful.
+      formatted: result.formatted || '',
     }
   } catch {
     return null
