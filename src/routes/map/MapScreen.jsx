@@ -10,13 +10,14 @@ import { isMapboxConfigured, mapboxToken } from '../../lib/mapbox'
 import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
 
-// Mapbox's current flagship style — soft shading, 3D buildings, real
-// depth — instead of the flat, dated-looking classic light-v11/dark-v11
-// styles. One style handles both themes via its own lightPreset config
-// (below), so there's no setStyle()-driven style swap on theme toggle
-// (which is also what makes this simpler than the old approach: config
-// properties apply instantly without re-fetching/re-cancelling a style).
-const MAP_STYLE = 'mapbox://styles/mapbox/standard'
+// Custom style designed in Mapbox Studio (not one of Mapbox's stock
+// styles) — colors, water/land/parks, everything about the base map's
+// look comes from here now, not from code. Edit it at
+// studio.mapbox.com/styles/akilen06/cmu9r4gyh007401qt3piw2a1s/edit and it
+// updates on next deploy without touching this file. One style for both
+// themes for now — if a separate dark-mode design gets built later, swap
+// this back to a per-theme lookup.
+const MAP_STYLE = 'mapbox://styles/akilen06/cmu9r4gyh007401qt3piw2a1s'
 
 // Same blue/teal/coral trio used everywhere else in the app (index.css
 // --color-accent-strong/--color-teal/--color-coral), rotated per marker so
@@ -94,15 +95,6 @@ export default function MapScreen() {
       const detail = err?.message || (err?.status ? `HTTP ${err.status} ${err.statusText || ''}`.trim() : 'Unknown error')
       setMapError(detail)
     })
-    // Standard's own config, applied once its default import is ready —
-    // 'faded' is a softer, less saturated palette than Mapbox's default
-    // (closer to this app's own muted design language) and hiding POI
-    // labels cuts the clutter that makes a map feel busy/dated at a glance.
-    map.on('style.load', () => {
-      map.setConfigProperty('basemap', 'theme', 'faded')
-      map.setConfigProperty('basemap', 'lightPreset', theme === 'dark' ? 'night' : 'day')
-      map.setConfigProperty('basemap', 'showPointOfInterestLabels', false)
-    })
     mapRef.current = map
 
     // The container sits inside a flex layout (sized by its parent, not by
@@ -120,23 +112,9 @@ export default function MapScreen() {
       map.remove()
       mapRef.current = null
     }
-    // Only ever created once — theme changes are handled by the effect
-    // below via setConfigProperty() instead of recreating the map.
+    // Only ever created once — this style doesn't vary by app theme.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    // A config property, not setStyle() — Standard's light preset switches
-    // instantly with no network refetch, unlike swapping to a whole
-    // different style (which is also what used to cause the map to go
-    // blank: setStyle() cancels whatever style request is still in flight).
-    // isStyleLoaded() guards the very first run, since the map's initial
-    // 'style.load' (in the effect above) already applies the starting
-    // preset and may not have fired yet on the same tick this runs.
-    if (mapRef.current?.isStyleLoaded()) {
-      mapRef.current.setConfigProperty('basemap', 'lightPreset', theme === 'dark' ? 'night' : 'day')
-    }
-  }, [theme])
 
   useEffect(() => {
     if (!mapRef.current) return
