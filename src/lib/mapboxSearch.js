@@ -7,12 +7,20 @@ export function newSearchSession() {
   return crypto.randomUUID()
 }
 
-// Autocomplete-as-you-type: restaurants, bars, cafes, landmarks, addresses
-// — anything Mapbox's places index knows about. `proximity` (optional,
-// {lat, lng}) biases ranking toward nearby results — without it (or without
-// the `types` restriction below), Mapbox's default ranking favors broad,
-// globally-recognized places like cities and regions over small local
-// venues, which is the wrong bias for picking a meetup spot.
+// Roughly "how specific is this result" — used only to sort results below,
+// never to exclude any. An earlier version hard-filtered to types=poi,address
+// server-side, which fixed cities crowding out restaurants in well-mapped
+// areas but caused empty results entirely in places with sparser business
+// listings (small markets, e.g. Mauritius) where poi/address coverage is
+// thin but locality/place data still exists. Sorting client-side instead
+// means a venue still wins when Mapbox has one, without ever hiding
+// whatever it does have.
+const TYPE_RANK = { poi: 0, address: 1, street: 2, neighborhood: 3, locality: 4, place: 5, district: 6, postcode: 7, region: 8, country: 9 }
+
+// Autocomplete-as-you-type: restaurants, bars, cafes, landmarks, addresses,
+// and (as a fallback where those are sparse) broader places — anything
+// Mapbox's index knows about. `proximity` (optional, {lat, lng}) biases
+// ranking toward nearby results.
 export async function searchPlaces(query, sessionToken, proximity) {
   if (!isMapboxConfigured || !query?.trim()) return []
   try {
@@ -20,21 +28,21 @@ export async function searchPlaces(query, sessionToken, proximity) {
       q: query,
       access_token: mapboxToken,
       session_token: sessionToken,
-      limit: '6',
-      // Businesses/landmarks and specific addresses only — excludes cities,
-      // regions, postcodes, etc., which otherwise crowd out the venue
-      // someone is actually searching for.
-      types: 'poi,address',
+      limit: '8',
     })
     if (proximity) params.set('proximity', `${proximity.lng},${proximity.lat}`)
     const res = await fetch(`https://api.mapbox.com/search/searchbox/v1/suggest?${params}`)
     if (!res.ok) return []
     const data = await res.json()
-    return (data.suggestions || []).map((s) => ({
-      id: s.mapbox_id,
-      name: s.name,
-      address: s.place_formatted || s.full_address || '',
-    }))
+    return (data.suggestions || [])
+      .map((s) => ({
+        id: s.mapbox_id,
+        name: s.name,
+        address: s.place_formatted || s.full_address || '',
+        rank: TYPE_RANK[s.feature_type] ?? 5,
+      }))
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 6)
   } catch {
     return []
   }
