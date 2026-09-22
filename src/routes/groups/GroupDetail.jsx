@@ -133,7 +133,11 @@ export default function GroupDetail() {
         </div>
         <div className="flex items-center gap-2">
           <MapPinLine size={17} />
-          {t('Approximate area only, {city} · exact spot shared once you join', { city: group.city })}
+          {isMember
+            ? group.locationName
+              ? group.locationName
+              : t('Approximate area only, {city} · organizer hasn\'t set an exact spot', { city: group.city })
+            : t('Approximate area only, {city} · exact spot shared once you join', { city: group.city })}
         </div>
       </div>
 

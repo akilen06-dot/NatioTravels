@@ -57,17 +57,22 @@ export default function MapScreen() {
   // Group meetups, not individual people — pinning exactly where a person
   // is standing is a real safety risk (it tells anyone browsing precisely
   // where to find them). A group's meetup is something people are already
-  // choosing to show up to publicly, so it doesn't carry that same risk.
-  // Position is still the same fuzzed, never-exact coordinate already used
-  // for Discover's distances (via the owner's profile) — approximate area
-  // only, same privacy design as everywhere else in the app.
+  // choosing to show up to publicly, so it doesn't carry that same risk —
+  // but only for people who've actually joined. A group's organizer can set
+  // a real, exact meetup spot (locationLat/Lng, from CreateGroup), and that
+  // exact pin is only used here for members; everyone else still gets the
+  // same fuzzed, never-exact owner-profile coordinate as before, matching
+  // the "exact spot shared once you join" promise shown in GroupDetail.
   const groupPins = useMemo(() => {
     return groups
       .filter((g) => !blockedIds.includes(g.ownerId))
       .map((g) => {
-        const owner =
-          g.ownerId === currentUser?.id ? currentUser : travelers.find((p) => p.id === g.ownerId)
-        return owner?.lat != null && owner?.lng != null ? { ...g, lat: owner.lat, lng: owner.lng } : null
+        const isMember = currentUser && (g.ownerId === currentUser.id || g.members.includes(currentUser.id))
+        if (isMember && g.locationLat != null && g.locationLng != null) {
+          return { ...g, lat: g.locationLat, lng: g.locationLng, exact: true }
+        }
+        const owner = g.ownerId === currentUser?.id ? currentUser : travelers.find((p) => p.id === g.ownerId)
+        return owner?.lat != null && owner?.lng != null ? { ...g, lat: owner.lat, lng: owner.lng, exact: false } : null
       })
       .filter(Boolean)
   }, [groups, travelers, blockedIds, currentUser])
@@ -123,8 +128,11 @@ export default function MapScreen() {
       const el = document.createElement('button')
       el.type = 'button'
       el.setAttribute('aria-label', group.name)
-      el.title = `${group.name} · ${group.city}`
-      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18);background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:transform 0.15s ease;`
+      // Exact pins only ever show for a member (see groupPins above), so
+      // this distinction is never visible to someone who hasn't joined.
+      el.title = group.exact ? `${group.name} · ${group.locationName || group.city}` : `${group.name} · ${group.city} (approximate)`
+      const ring = group.exact ? `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18),0 0 0 4px ${colorForId(group.id, theme)}33;` : `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18);`
+      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;${ring}background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:transform 0.15s ease;`
       el.innerHTML = MARKER_ICON_HTML
       el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.15)' })
       el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })

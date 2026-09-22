@@ -7,6 +7,7 @@ import Button from '../../components/Button'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import { useStore, hasAccess } from '../../lib/store'
 import { countries } from '../../lib/mockData'
+import { forwardGeocode, isGeocodingConfigured } from '../../lib/geocode'
 import { useT } from '../../lib/i18n'
 
 export default function CreateGroup() {
@@ -20,8 +21,10 @@ export default function CreateGroup() {
     city: currentUser?.city || '',
     date: '',
     description: '',
+    locationQuery: '',
   })
   const [dateError, setDateError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
@@ -48,7 +51,18 @@ export default function CreateGroup() {
       setDateError(t('Pick a date for the meetup.'))
       return
     }
-    const id = await createGroup(form)
+    setSubmitting(true)
+    // Optional, and soft-fails quietly like the app's other geocoding calls
+    // — a group with no exact spot set (or one that didn't resolve) just
+    // falls back to the existing approximate map pin for everyone, members
+    // included, rather than blocking creation over it.
+    const geo = form.locationQuery.trim() ? await forwardGeocode(form.locationQuery) : null
+    const id = await createGroup({
+      ...form,
+      locationName: form.locationQuery.trim(),
+      locationLat: geo?.lat ?? null,
+      locationLng: geo?.lng ?? null,
+    })
     navigate(`/groups/${id}`)
   }
 
@@ -120,7 +134,25 @@ export default function CreateGroup() {
           />
         </Field>
 
-        <Field label={t('Description')} htmlFor="description" helper={t('Exact location stays hidden until someone joins.')}>
+        <Field
+          label={t('Exact meetup spot (optional)')}
+          htmlFor="locationQuery"
+          helper={
+            isGeocodingConfigured
+              ? t('Only shown as a map pin to people who join — everyone else still sees just the approximate area.')
+              : t("Saved as text for now — ask your Natio admin to set up location lookup to also show it as a map pin.")
+          }
+        >
+          <input
+            id="locationQuery"
+            value={form.locationQuery}
+            onChange={(e) => update('locationQuery', e.target.value)}
+            placeholder={t('e.g. Praça do Comércio, or a bar name')}
+            className={fieldClasses(false)}
+          />
+        </Field>
+
+        <Field label={t('Description')} htmlFor="description">
           <textarea
             id="description"
             required
@@ -132,8 +164,8 @@ export default function CreateGroup() {
           />
         </Field>
 
-        <Button type="submit" size="lg" className="mt-2 w-full">
-          {t('Create group')}
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={submitting}>
+          {submitting ? t('Creating…') : t('Create group')}
         </Button>
       </form>
     </div>

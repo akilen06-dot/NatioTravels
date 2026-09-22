@@ -28,6 +28,27 @@ export function fuzzCoordinates({ lat, lng }) {
   }
 }
 
+// Forward-geocodes a free-text address/place to coordinates via OpenCage.
+// Returns null (letting the caller fall back to no exact pin at all) when no
+// API key is configured, the query is empty, or nothing matches. Unlike
+// fuzzCoordinates() above, this is deliberately NOT rounded/jittered — it's
+// for a meetup spot someone is choosing to publicize, not a person's
+// location, so precision here is the point rather than a privacy risk.
+export async function forwardGeocode(query) {
+  if (!isGeocodingConfigured || !query?.trim()) return null
+  try {
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(query)}&key=${GEOCODING_API_KEY}&no_annotations=1&limit=1`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    const geometry = data?.results?.[0]?.geometry
+    if (!geometry) return null
+    return { lat: geometry.lat, lng: geometry.lng }
+  } catch {
+    return null
+  }
+}
+
 // Reverse-geocodes fuzzed coordinates to a city/country via OpenCage. Returns
 // null (letting the caller fall back to whatever the user typed at signup)
 // when no API key is configured or the request fails.

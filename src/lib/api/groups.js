@@ -9,6 +9,9 @@ function mapGroupRow(row, members, requests, ratings) {
     date: row.date,
     description: row.description ?? '',
     ownerId: row.owner_id,
+    locationName: row.location_name ?? '',
+    locationLat: row.location_lat,
+    locationLng: row.location_lng,
     members: members.filter((m) => m.group_id === row.id).map((m) => m.user_id),
     pendingRequests: requests.filter((r) => r.group_id === row.id).map((r) => r.user_id),
     ratings: ratings
@@ -31,7 +34,17 @@ export async function listGroups() {
 export async function createGroup(ownerId, data) {
   const { data: group, error } = await supabase
     .from('groups')
-    .insert({ name: data.name, nationality: data.nationality, city: data.city, date: data.date, description: data.description, owner_id: ownerId })
+    .insert({
+      name: data.name,
+      nationality: data.nationality,
+      city: data.city,
+      date: data.date,
+      description: data.description,
+      owner_id: ownerId,
+      location_name: data.locationName || null,
+      location_lat: data.locationLat ?? null,
+      location_lng: data.locationLng ?? null,
+    })
     .select()
     .single()
   if (error) throw error

@@ -122,6 +122,16 @@ create table if not exists groups (
   created_at timestamptz not null default now()
 );
 
+-- The organizer's optional exact meetup spot (address text + real,
+-- unfuzzed coordinates — unlike a profile's location, this is a public
+-- event someone is choosing to publicize, not a person's whereabouts).
+-- Only ever shown to group members in the app; everyone else still sees
+-- the approximate, fuzzed owner-location pin. Nullable: most groups may
+-- never set one, falling back to that same approximate pin for members too.
+alter table groups add column if not exists location_name text;
+alter table groups add column if not exists location_lat double precision;
+alter table groups add column if not exists location_lng double precision;
+
 create table if not exists group_members (
   group_id uuid not null references groups(id) on delete cascade,
   user_id uuid not null references profiles(id) on delete cascade,
