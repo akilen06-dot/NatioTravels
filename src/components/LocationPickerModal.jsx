@@ -28,6 +28,13 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [searching, setSearching] = useState(false)
+  // The device's real, live position (via GeolocateControl's blue dot) —
+  // purely client-side, never sent anywhere or stored; only used to center
+  // the map and bias search toward what's actually nearby right now, which
+  // beats initialCenter's coarser fallback (profile location, or the city
+  // typed in the form) whenever it's available.
+  const [liveLocation, setLiveLocation] = useState(null)
+  const searchProximity = liveLocation || initialCenter
 
   function moveMarkerTo(lngLat) {
     if (!markerRef.current) {
@@ -72,12 +79,12 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
     }
     setSearching(true)
     const timer = setTimeout(async () => {
-      const results = await searchPlaces(query, sessionToken, initialCenter)
+      const results = await searchPlaces(query, sessionToken, searchProximity)
       setSuggestions(results)
       setSearching(false)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query, sessionToken, initialCenter])
+  }, [query, sessionToken, searchProximity])
 
   useEffect(() => {
     if (!isMapboxConfigured || !mapContainerRef.current) return
@@ -89,6 +96,26 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
       zoom: initialCenter ? 13 : 1.5,
     })
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
+
+    // The "blue dot" — the device's real live location, tracked live (not
+    // the fuzzed one from a profile). Recenters the map there itself once
+    // found; the 'geolocate' listener below just also captures it for the
+    // search proximity bias above.
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true,
+    })
+    map.addControl(geolocate, 'top-right')
+    geolocate.on('geolocate', (position) => {
+      setLiveLocation({ lat: position.coords.latitude, lng: position.coords.longitude })
+    })
+    // Ask immediately rather than waiting for the user to find and click
+    // the control button — they just opened this modal specifically to
+    // place a pin, so a location prompt right away is expected, not a
+    // surprise. If it's denied, the map just stays at initialCenter.
+    map.on('load', () => geolocate.trigger())
+
     mapRef.current = map
 
     map.on('click', (e) => {
