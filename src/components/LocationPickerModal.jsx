@@ -10,6 +10,24 @@ import { useT } from '../lib/i18n'
 
 const MIN_QUERY_LENGTH = 3
 
+// The named place icon under a point on the map, if any. Matches by layer
+// id or the `maki` icon property rather than one hardcoded layer name,
+// since the exact id depends on how the Studio style was built. The small
+// box (instead of a single pixel) makes small icons easier to hit.
+function findPoiAt(map, point) {
+  const pad = 6
+  const features = map.queryRenderedFeatures([
+    [point.x - pad, point.y - pad],
+    [point.x + pad, point.y + pad],
+  ])
+  return features.find(
+    (f) =>
+      f.geometry?.type === 'Point' &&
+      f.properties?.name &&
+      (/poi/i.test(f.layer?.id || '') || f.properties?.maki),
+  )
+}
+
 // Click-to-drop-pin picker for a group's exact meetup spot, plus a search
 // bar for finding a named place (restaurant, bar, landmark) directly — a
 // separate Mapbox instance from the Map tab's (a modal, mounted/unmounted
@@ -124,8 +142,24 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
     mapRef.current = map
 
     map.on('click', (e) => {
+      // Tapped a place icon (restaurant, beach, shop…) — snap to the
+      // place's own coordinates and use its name, rather than dropping a
+      // pin at wherever the finger landed near it.
+      const poi = findPoiAt(map, e.point)
+      if (poi) {
+        const [lng, lat] = poi.geometry.coordinates
+        moveMarkerTo({ lng, lat })
+        setPicked({ lat, lng })
+        setLabel(poi.properties.name)
+        setLabelLoading(false)
+        return
+      }
       moveMarkerTo(e.lngLat)
       placeFromClick(e.lngLat)
+    })
+
+    map.on('mousemove', (e) => {
+      map.getCanvas().style.cursor = findPoiAt(map, e.point) ? 'pointer' : ''
     })
 
     // Same fix as the Map tab: the container is sized by a flex layout, and
