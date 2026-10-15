@@ -122,15 +122,19 @@ export default function MapScreen() {
       // Exact pins only ever show for a member (see groupPins above), so
       // this distinction is never visible to someone who hasn't joined.
       el.title = group.exact ? `${group.name} · ${group.locationName || group.city}` : `${group.name} · ${group.city} (approximate)`
-      const ring = group.exact ? `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18),0 0 0 4px ${colorForId(group.id, theme)}33;` : `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18);`
-      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;${ring}background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:scale 0.15s ease;`
+      const color = colorForId(group.id, theme)
+      const baseShadow = group.exact
+        ? `0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18),0 0 0 4px ${color}33`
+        : '0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18)'
+      const hoverShadow = `0 3px 8px rgba(0,0,0,0.22),0 0 0 6px ${color}55`
+      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;box-shadow:${baseShadow};background:${color};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;`
       el.innerHTML = MARKER_ICON_HTML
-      // `scale`, not `transform`: Mapbox positions every marker with an
-      // inline transform: translate(...) on this same element, so setting
-      // transform here overwrote it and threw the pin to the map's
-      // top-left corner on hover.
-      el.addEventListener('mouseenter', () => { el.style.scale = '1.15' })
-      el.addEventListener('mouseleave', () => { el.style.scale = '1' })
+      // Hover feedback is a glow, not a resize or move: Mapbox owns this
+      // element's position (an inline transform) and a growing pin changes
+      // the area under the cursor, which made it twitch at the edges. A
+      // box-shadow changes neither.
+      el.addEventListener('mouseenter', () => { el.style.boxShadow = hoverShadow })
+      el.addEventListener('mouseleave', () => { el.style.boxShadow = baseShadow })
       el.addEventListener('click', () => navigate(`/groups/${group.id}`))
       return new mapboxgl.Marker({ element: el }).setLngLat([group.lng, group.lat]).addTo(mapRef.current)
     })
