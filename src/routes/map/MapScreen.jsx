@@ -7,23 +7,11 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import { useStore, hasAccess } from '../../lib/store'
 import { isMapboxConfigured, mapboxToken, mapboxStyle } from '../../lib/mapbox'
-import { useTheme } from '../../lib/useTheme'
 import { useT } from '../../lib/i18n'
 
-// Same blue/teal/coral trio used everywhere else in the app (index.css
-// --color-accent-strong/--color-teal/--color-coral), rotated per marker so
-// groups are visually distinct — deterministic per group id, not random,
-// so a group keeps the same color across re-renders.
-const PIN_COLORS = {
-  light: ['#1d3fc4', '#0f9b8e', '#e2703a'],
-  dark: ['#3b5fe0', '#3fbdae', '#f0895c'],
-}
-function colorForId(id, theme) {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  const palette = PIN_COLORS[theme] || PIN_COLORS.light
-  return palette[hash % palette.length]
-}
+// Hot pink for every group pin — stands out against the map's blue/green
+// base style in both light and dark themes, so one color serves both.
+const PIN_COLOR = '#ff2e93'
 
 // Same icon as the Groups nav item, rendered once to an HTML string —
 // Mapbox markers are plain DOM, not React, so this is how a React icon
@@ -35,7 +23,6 @@ const MARKER_ICON_HTML = renderToStaticMarkup(<UsersThree size={16} weight="bold
 export default function MapScreen() {
   const t = useT()
   const navigate = useNavigate()
-  const { theme } = useTheme()
   const currentUser = useStore((s) => s.currentUser)
   const travelers = useStore((s) => s.travelers)
   const groups = useStore((s) => s.groups)
@@ -122,7 +109,7 @@ export default function MapScreen() {
       // Exact pins only ever show for a member (see groupPins above), so
       // this distinction is never visible to someone who hasn't joined.
       el.title = group.exact ? `${group.name} · ${group.locationName || group.city}` : `${group.name} · ${group.city} (approximate)`
-      const color = colorForId(group.id, theme)
+      const color = PIN_COLOR
       const baseShadow = group.exact
         ? `0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18),0 0 0 4px ${color}33`
         : '0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18)'
@@ -141,7 +128,7 @@ export default function MapScreen() {
     return () => {
       markersRef.current.forEach((marker) => marker.remove())
     }
-  }, [groupPins, navigate, theme])
+  }, [groupPins, navigate])
 
   if (!hasAccess(currentUser)) {
     return currentUser?.plan ? (
