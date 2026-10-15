@@ -222,7 +222,10 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
           {isMapboxConfigured ? (
             <>
               <div ref={mapContainerRef} className="h-full w-full" />
-              <div className="pointer-events-none absolute inset-x-3 top-3 z-10">
+              {/* right-14, not inset-x-3: leaves room for Mapbox's zoom and
+                  locate controls stacked at the top-right, which a
+                  full-width bar would otherwise cover. */}
+              <div className="pointer-events-none absolute left-3 right-14 top-3 z-10">
                 <div className="pointer-events-auto relative">
                   <MagnifyingGlass size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint" />
                   <input
