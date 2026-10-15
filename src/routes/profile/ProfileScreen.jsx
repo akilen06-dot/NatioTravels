@@ -3,7 +3,7 @@ import { GearSix, ShieldCheck } from '@phosphor-icons/react'
 import Button from '../../components/Button'
 import PostGrid from '../../components/PostGrid'
 import Avatar from '../../components/Avatar'
-import { useStore, isTripLocked, isTripCapped, tripPassExpiry } from '../../lib/store'
+import { useStore, isTripLocked, isTripCapped, tripPassExpiry, isPromoActive } from '../../lib/store'
 import { formatLocation } from '../../lib/formatLocation'
 import { useT } from '../../lib/i18n'
 
@@ -23,6 +23,10 @@ export default function ProfileScreen() {
   const matches = useStore((s) => s.matches)
   const groups = useStore((s) => s.groups)
   const locked = isTripLocked(currentUser)
+  // During the free launch promo an ended pass costs nothing — everyone has
+  // full access — so showing "Expired / Renew plan" would be pushing a
+  // purchase nobody needs yet. Show the same card as someone with no plan.
+  const expiredDuringPromo = locked && isPromoActive()
   const capped = isTripCapped(currentUser)
   const remaining = daysLeft(tripPassExpiry(currentUser))
   const myGroupsCount = groups.filter(
@@ -73,7 +77,7 @@ export default function ProfileScreen() {
       </Button>
 
       <div className="mt-5 rounded-2xl border border-border bg-bg-raised p-5">
-        {currentUser.plan ? (
+        {currentUser.plan && !expiredDuringPromo ? (
           <>
             <div className="flex items-center justify-between">
               <p className="text-[14.5px] font-medium text-ink">

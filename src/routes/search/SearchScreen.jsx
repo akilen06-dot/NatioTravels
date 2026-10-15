@@ -5,7 +5,7 @@ import { fieldClasses } from '../../lib/fieldClasses'
 import TripLockedNotice from '../../components/TripLockedNotice'
 import Button from '../../components/Button'
 import Avatar from '../../components/Avatar'
-import { useStore, hasAccess, isTripLocked } from '../../lib/store'
+import { useStore, hasAccess, isTripLocked, isPromoActive } from '../../lib/store'
 import { useT } from '../../lib/i18n'
 
 const FREE_SEARCH_LIMIT = 5
@@ -18,7 +18,10 @@ export default function SearchScreen() {
   const existingUsers = useStore((s) => s.existingUsers)
   const blockedIds = useStore((s) => s.blockedIds)
   const [query, setQuery] = useState('')
-  const locked = isTripLocked(currentUser)
+  // An ended trip pass doesn't lock anything during the free launch promo —
+  // every other gated screen already goes through hasAccess(), which
+  // honors it; this one checked the pass directly and so didn't.
+  const locked = isTripLocked(currentUser) && !isPromoActive()
   const unlimited = hasAccess(currentUser)
 
   const allResults = useMemo(() => {
