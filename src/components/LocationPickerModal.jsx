@@ -38,6 +38,9 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
+  // Bumped on every new pin so a slow address lookup from an earlier tap
+  // can't land afterward and overwrite the label of the current one.
+  const lookupRef = useRef(0)
   const [picked, setPicked] = useState(null) // { lat, lng }
   const [label, setLabel] = useState('')
   const [labelLoading, setLabelLoading] = useState(false)
@@ -70,16 +73,36 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
   // Map click / marker drag — coordinates only, so the address has to be
   // looked up.
   async function placeFromClick(lngLat) {
+    const request = ++lookupRef.current
     setPicked({ lat: lngLat.lat, lng: lngLat.lng })
     setLabel('')
     setLabelLoading(true)
     const place = await reverseGeocode(lngLat)
+    if (request !== lookupRef.current) return
     setLabelLoading(false)
     setLabel(place?.formatted || '')
   }
 
+  // Tapped a place icon — the name is known right away, but the map tile
+  // only carries a name, not an address, so look the address up and show
+  // both ("Big Willy's, Royal Road, Tamarin, Mauritius"). Shows the bare
+  // name in the meantime, and keeps it if the lookup finds nothing.
+  async function placeFromPoi({ lat, lng, name }) {
+    const request = ++lookupRef.current
+    setPicked({ lat, lng })
+    setLabel(name)
+    setLabelLoading(false)
+    const place = await reverseGeocode({ lat, lng })
+    if (request !== lookupRef.current || !place?.formatted) return
+    // The geocoder sometimes already leads with the place's own name —
+    // don't repeat it.
+    const startsWithName = place.formatted.toLowerCase().startsWith(name.toLowerCase())
+    setLabel(startsWithName ? place.formatted : `${name}, ${place.formatted}`)
+  }
+
   // Search result — already has a name/address, so no reverse-geocode call.
   function placeFromSearch({ lat, lng, label: resultLabel }) {
+    lookupRef.current++
     setPicked({ lat, lng })
     setLabel(resultLabel)
     setLabelLoading(false)
@@ -149,9 +172,7 @@ export default function LocationPickerModal({ initialCenter, onConfirm, onClose 
       if (poi) {
         const [lng, lat] = poi.geometry.coordinates
         moveMarkerTo({ lng, lat })
-        setPicked({ lat, lng })
-        setLabel(poi.properties.name)
-        setLabelLoading(false)
+        placeFromPoi({ lat, lng, name: poi.properties.name })
         return
       }
       moveMarkerTo(e.lngLat)
