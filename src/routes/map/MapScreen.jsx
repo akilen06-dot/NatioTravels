@@ -123,10 +123,14 @@ export default function MapScreen() {
       // this distinction is never visible to someone who hasn't joined.
       el.title = group.exact ? `${group.name} · ${group.locationName || group.city}` : `${group.name} · ${group.city} (approximate)`
       const ring = group.exact ? `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18),0 0 0 4px ${colorForId(group.id, theme)}33;` : `box-shadow:0 3px 8px rgba(0,0,0,0.22),0 1px 3px rgba(0,0,0,0.18);`
-      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;${ring}background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:transform 0.15s ease;`
+      el.style.cssText = `width:36px;height:36px;border-radius:9999px;border:2.5px solid white;${ring}background:${colorForId(group.id, theme)};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;transition:scale 0.15s ease;`
       el.innerHTML = MARKER_ICON_HTML
-      el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.15)' })
-      el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })
+      // `scale`, not `transform`: Mapbox positions every marker with an
+      // inline transform: translate(...) on this same element, so setting
+      // transform here overwrote it and threw the pin to the map's
+      // top-left corner on hover.
+      el.addEventListener('mouseenter', () => { el.style.scale = '1.15' })
+      el.addEventListener('mouseleave', () => { el.style.scale = '1' })
       el.addEventListener('click', () => navigate(`/groups/${group.id}`))
       return new mapboxgl.Marker({ element: el }).setLngLat([group.lng, group.lat]).addTo(mapRef.current)
     })
